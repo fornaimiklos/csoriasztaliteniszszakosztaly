@@ -3,125 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏓 Ping-Pong Jelentkezés</title>
+    <title>🏓 Automata Jelentkezés</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1e5799 0%,#2989d8 50%,#7db9e8 100%); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; color: #333; }
-        .container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 400px; text-align: center; }
-        h1 { color: #0056b3; margin-bottom: 5px; }
-        p.subtitle { color: #666; margin-bottom: 25px; font-size: 14px; }
-        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 2px solid #eee; font-size: 16px; transition: 0.3s; box-sizing: border-box; }
-        input:focus, select:focus { border-color: #0056b3; outline: none; }
-        button { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 20px; text-transform: uppercase; letter-spacing: 1px; }
-        button:hover { background: #218838; transform: translateY(-2px); }
-        button:active { transform: translateY(0); }
-        #status { font-weight: bold; margin-top: 15px; min-height: 20px; }
-        .success { color: #28a745; }
-        .error { color: #dc3545; }
+        body { font-family: sans-serif; background: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 15px; shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        select, input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
+        button { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
+        #loader { font-size: 14px; color: #666; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>🏓 Ping-Pong</h1>
-    <p class="subtitle">Válassz időpontot és gyere edzeni!</p>
+<div class="card">
+    <h2>🏓 Edzés Jelentkezés</h2>
+    <div id="loader">Dátumok betöltése...</div>
     
-    <input type="text" id="name" placeholder="Írd be a neved..." required>
+    <input type="text" id="userName" placeholder="Neved..." required>
     
-    <select id="date">
-        <option value="">-- Melyik edzésre jössz? --</option>
-        <option id="opt1"></option>
-        <option id="opt2"></option>
-        <option id="opt3"></option>
-        <option id="opt4"></option>
+    <select id="dateSelect" style="display:none;">
+        <option value="">-- Válassz időpontot --</option>
     </select>
 
-    <button onclick="sendData()" id="submitBtn">Ott leszek!</button>
-    <div id="status"></div>
+    <button onclick="submitForm()">OTT LESZEK!</button>
+    <p id="msg"></p>
 </div>
 
 <script>
-    // Következő 4 edzésnap generálása (Kedd, Csüt, Vas)
-    function generateDates() {
-        let dates = [];
-        let d = new Date();
-        while(dates.length < 4) {
-            d.setDate(d.getDate() + 1);
+    const scriptURL = "IDE_MASOLD_BE_A_GOOGLE_SCRIPT_LINKET";
+
+    // Automatikusan kiszámolja a dátumokat 7 napra előre (Kedd, Csüt, Vas)
+    function setDates() {
+        const select = document.getElementById('dateSelect');
+        const loader = document.getElementById('loader');
+        let today = new Date();
+        let found = false;
+
+        for (let i = 1; i <= 7; i++) {
+            let d = new Date();
+            d.setDate(today.getDate() + i);
             let day = d.getDay();
-            if(day === 2 || day === 4 || day === 0) { 
-                let options = { month: 'short', day: 'numeric', weekday: 'short' };
-                let dateStr = d.toLocaleDateString('hu-HU', options);
-                let timeStr = (day === 0) ? "9:00 - 12:00" : "19:00 - 21:00";
-                let finalLabel = dateStr + " | " + timeStr;
-                dates.push(finalLabel);
+
+            if (day === 2 || day === 4 || day === 0) {
+                let opt = document.createElement('option');
+                let label = d.toLocaleDateString('hu-HU', {month:'short', day:'numeric', weekday:'short'});
+                let time = (day === 0) ? "9:00 - 12:00" : "19:00 - 21:00";
+                opt.value = label + " " + time;
+                opt.text = label + " | " + time;
+                select.add(opt);
+                found = true;
             }
         }
-        for(let i=1; i<=4; i++) {
-            let el = document.getElementById('opt'+i);
-            el.innerText = dates[i-1];
-            el.value = dates[i-1];
-        }
+        loader.style.display = 'none';
+        select.style.display = 'block';
     }
-    generateDates();
+    setDates();
 
-    function sendData() {
-        const name = document.getElementById('name').value;
-        const date = document.getElementById('date').value;
-        const status = document.getElementById('status');
-        const btn = document.getElementById('submitBtn');
+    function submitForm() {
+        const name = document.getElementById('userName').value;
+        const date = document.getElementById('dateSelect').value;
+        if(!name || !date) { alert("Tölts ki mindent!"); return; }
 
-        if(!name || !date) {
-            status.innerText = "❌ Tölts ki mindent!";
-            status.className = "error";
-            return;
-        }
-
-        btn.disabled = true;
-        status.innerText = "⏳ Küldés folyamatban...";
-        status.className = "";
-        
-        function doPost(e) {
-  try {
-    // A honlapról érkező adatok feldolgozása
-    var data = JSON.parse(e.postData.contents);
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    
-    // Új sor hozzáadása a táblázathoz: 
-    // Időbélyeg | Név | Választott időpont
-    sheet.appendRow([new Date(), data.név, data.időpont]);
-    
-    return ContentService.createTextOutput("Sikeres mentés")
-      .setMimeType(ContentService.MimeType.TEXT);
-      
-  } catch (error) {
-    // Hiba esetén visszajelzés
-    return ContentService.createTextOutput("Hiba: " + error.toString())
-      .setMimeType(ContentService.MimeType.TEXT);
-  }
-}
-
-// Ez a rész csak azért kell, hogy a böngésző ne dobjon hibát a küldéskor
-function doOptions(e) {
-  return ContentService.createTextOutput("")
-    .setMimeType(ContentService.MimeType.TEXT);
-}
-
-        fetch(url, {
-            method: "POST",
-            mode: "no-cors",
-            cache: "no-cache",
-            body: JSON.stringify({ név: name, időpont: date })
+        fetch(scriptURL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({név: name, időpont: date})
         }).then(() => {
-            status.innerText = "✅ Siker! Beírtalak az edzésre.";
-            status.className = "success";
-            document.getElementById('name').value = "";
-            btn.disabled = false;
-        }).catch(e => {
-            status.innerText = "❌ Hiba történt a küldéskor!";
-            status.className = "error";
-            btn.disabled = false;
+            document.getElementById('msg').innerText = "✅ Sikeres jelentkezés!";
+            document.getElementById('userName').value = "";
         });
     }
 </script>
-
 </body>
 </html>
