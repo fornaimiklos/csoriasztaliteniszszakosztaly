@@ -5,74 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🏓 Edzés Jelentkezés</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
         .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
         h2 { color: #333; margin-bottom: 20px; }
         input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
         button { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
         button:hover { background: #218838; }
-        button:disabled { background: #ccc; }
         #participantList { margin-top: 20px; text-align: left; background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 5px solid #28a745; display: none; }
-        #names { font-weight: bold; color: #495057; margin-top: 5px; line-height: 1.5; }
-        .status-msg { font-size: 14px; margin-top: 10px; font-weight: bold; }
+        #names { font-weight: bold; color: #495057; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h2>🏓 Edzés Jelentkezés</h2>
-    
     <input type="text" id="userName" placeholder="Írd be a neved..." required>
     
     <select id="dateSelect" onchange="showParticipants()">
-        <option value="">-- Válassz időpontot --</option>
+        <option value="">-- Időpontok betöltése... --</option>
     </select>
 
     <div id="participantList">
         <strong>Eddigi jelentkezők:</strong>
-        <div id="names">Betöltés...</div>
+        <div id="names"></div>
     </div>
 
     <button onclick="submitForm()" id="submitBtn">OTT LESZEK!</button>
-    <p id="msg" class="status-msg"></p>
+    <p id="msg" style="font-weight:bold; margin-top:10px;"></p>
 </div>
 
 <script>
-    // Beillesztettem az új linkedet:
     const scriptURL = "https://script.google.com/macros/s/AKfycbx2gBH6JnlnpL3maSo6tsZi9RNYkc_88adp788SLCiH4NwhNhg7nOuxHTUA02b4CPgd/exec";
 
     let allParticipants = [];
     let allDates = [];
 
-    // 1. Adatok betöltése a Google Táblázatodból
-    async function loadParticipants() {
+    async function loadData() {
         try {
             const response = await fetch(scriptURL + "?t=" + new Date().getTime());
             const data = await response.json();
-            allParticipants = data.jelentkezok;
-            allDates = data.idopontok;
-            setDates();
+            allParticipants = data.jelentkezok || [];
+            allDates = data.idopontok || [];
+            
+            const select = document.getElementById('dateSelect');
+            select.innerHTML = '<option value="">-- Válassz időpontot --</option>';
+
+            // Átugorjuk az első 5 sort (A1-A5) és csak a valós dátumokat tesszük be (A6-tól)
+            const realDates = allDates.slice(5).filter(d => d && d.toString().trim() !== "");
+
+            if (realDates.length === 0) {
+                select.innerHTML = '<option value="">Nincs elérhető időpont</option>';
+            } else {
+                // Csak az első 6 elérhető alkalmat mutatjuk meg a táblázatból
+                realDates.slice(0, 6).forEach(date => {
+                    let opt = document.createElement('option');
+                    opt.value = date;
+                    opt.text = date;
+                    select.add(opt);
+                });
+            }
         } catch (e) {
-            console.error("Hiba:", e);
+            console.error(e);
+            document.getElementById('dateSelect').innerHTML = '<option value="">Hiba a betöltéskor</option>';
         }
     }
 
-    // 2. A menü feltöltése a táblázatod A oszlopából
-    function setDates() {
-        const select = document.getElementById('dateSelect');
-        // Kiszűrjük az üres sorokat és csak a következő 5 dátumot mutatjuk
-        const validDates = allDates.filter(d => d.trim() !== "").slice(0, 5);
+    function showParticipants() {
+        const selectedDate = document.getElementById('dateSelect').value;
+        const listDiv = document.getElementById('participantList');
+        const namesDiv = document.getElementById('names');
         
-        validDates.forEach(dateText => {
-            let opt = document.createElement('option');
-            opt.value = dateText;
-            opt.text = dateText;
-            select.add(opt);
+        if(!selectedDate) { listDiv.style.display = 'none'; return; }
+
+        const filtered = allParticipants
+            .filter(p => p.idopont === selectedDate)
+            .map(p => p.nev);
+
+        namesDiv.innerHTML = filtered.length > 0 ? filtered.join(", ") : "Még nincs jelentkező.";
+        listDiv.style.display = 'block';
+    }
+
+    function submitForm() {
+        const name = document.getElementById('userName').value.trim();
+        const date = document.getElementById('dateSelect').value;
+        if(!name || !date) { alert("Név és dátum kötelező!"); return; }
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerText = "Küldés...";
+
+        fetch(scriptURL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({név: name, időpont: date})
+        }).then(() => {
+            document.getElementById('msg').innerText = "✅ Sikeresen jelentkeztél!";
+            setTimeout(() => location.reload(), 2000);
+        }).catch(() => {
+            alert("Hiba történt!");
+            btn.disabled = false;
         });
     }
 
-    // 3. Jelentkezők listázása
-    function showParticipants() {
-        const selectedDate = document.getElementById('dateSelect').value.trim();
-        const listDiv = document.getElementById('participantList');
-        const namesDiv = document.getElementById('names');
+    loadData();
+</script>
+</body>
+</html>
