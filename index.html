@@ -29,19 +29,19 @@
 </div>
 
 <script>
-    // AZ ÚJ SCRIPT URL-ED
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJL8HGro27V0yFY7v-T4P-moPTXraWfTmDhEETjbn9dYSsJn-lZvZqEEy2rPpIumQw/exec";
+    // AZ ÚJ SCRIPT URL-ED BEILLESZTVE
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyJ7XurMwM9xfOiSPDmv7jEFT5aQ-2BOTKZji5baQ3KQqHzGlhAuBW1JG5CgbJtcH_i/exec";
 
-    // Dátumok betöltése a táblázatból
+    // Dátumok lekérése
     window.onload = function() {
         fetch(SCRIPT_URL + "?action=getDates")
             .then(response => response.json())
             .then(data => {
                 const select = document.getElementById('idopont');
-                select.innerHTML = ""; // Töröljük a betöltés üzenetet
+                select.innerHTML = ""; 
                 
-                if (data.length === 0 || data[0].includes("Hiba")) {
-                    select.innerHTML = "<option>Hiba az adatok lekérésekor</option>";
+                if (!data || data.length === 0) {
+                    select.innerHTML = "<option>Nincs elérhető időpont</option>";
                 } else {
                     data.forEach(date => {
                         let opt = document.createElement('option');
@@ -52,18 +52,18 @@
                 }
             })
             .catch(err => {
-                document.getElementById('status').innerText = "Hiba: Nem sikerült elérni a táblázatot.";
+                document.getElementById('status').innerText = "Hiba: Frissítsd az oldalt!";
                 console.error(err);
             });
     };
 
-    // Jelentkezés elküldése
+    // Beküldés
     function submitForm() {
         const nev = document.getElementById('nev').value;
         const idopont = document.getElementById('idopont').value;
         const status = document.getElementById('status');
 
-        if (!nev || idopont.includes("betöltése")) {
+        if (!nev || !idopont || idopont.includes("betöltése")) {
             status.innerText = "Kérlek, tölts ki mindent!";
             status.style.color = "red";
             return;
@@ -72,31 +72,8 @@
         status.innerText = "Küldés...";
         status.style.color = "blue";
 
-        const formData = new FormData();
-        formData.append("nev", nev);
-        formData.append("idopont", idopont);
-
+        // Adatok küldése POST kéréssel
         fetch(SCRIPT_URL, {
             method: "POST",
-            body: formData
-        })
-        .then(res => res.text())
-        .then(final => {
-            if (final === "SIKER") {
-                status.innerText = "Sikeres jelentkezés! ✅";
-                status.style.color = "green";
-                document.getElementById('nev').value = "";
-            } else {
-                status.innerText = "Hiba történt a mentéskor.";
-                status.style.color = "red";
-            }
-        })
-        .catch(err => {
-            status.innerText = "Hálózati hiba történt.";
-            status.style.color = "red";
-        });
-    }
-</script>
-
-</body>
-</html>
+            mode: "no-cors", // Fontos a Google Script miatt
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
