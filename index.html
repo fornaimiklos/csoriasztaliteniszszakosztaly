@@ -5,17 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edzés Jelentkezés</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h2 { color: #333; margin-bottom: 25px; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 15px; background-color: #28a745; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.3s; margin-top: 10px; }
-        button:hover { background-color: #218838; }
-        #status { margin-top: 15px; font-weight: bold; }
-        .attendee-list { margin-top: 20px; text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; display: none; }
-        .attendee-list h3 { font-size: 16px; margin: 0 0 10px 0; color: #555; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-        .attendee-list ul { list-style: none; padding: 0; margin: 0; }
-        .attendee-list li { padding: 6px 0; border-bottom: 1px solid #f1f1f1; font-size: 14px; color: #333; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 25px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        .attendee-list {
+            margin-top: 20px;
+            text-align: left;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            display: none;
+        }
+        .attendee-list h3 {
+            font-size: 16px;
+            margin: 0 0 10px 0;
+            color: #555;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        .attendee-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .attendee-list li {
+            padding: 6px 0;
+            border-bottom: 1px solid #f1f1f1;
+            font-size: 14px;
+            color: #333;
+        }
+        .attendee-list li:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
@@ -38,26 +109,38 @@
 </div>
 
 <script>
-    // A TE LEGFRISSEBB SCRIPT URL-ED
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiQoXZceb5Ad3j91vBKMJ-Y8GgGn3GK_e2OOb7AmcvpQ1alz5ue-EUf-fmpY0hA66y/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSbUEBg62y3gPCQdrrc1eIbpz6q4kuGse1-n3XX1ac2yAxN1tOeSiFt5Dpvh00E2c/exec";
 
     let allAttendees = [];
 
     window.onload = function() {
-        // Időpontok lekérése
+        const status = document.getElementById('status');
+
         fetch(SCRIPT_URL + "?action=getDates")
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error("HTTP hiba: " + res.status);
+                return res.json();
+            })
             .then(data => {
                 const select = document.getElementById('idopont');
                 select.innerHTML = "<option disabled selected value=''>Válassz időpontot...</option>";
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    status.innerText = "Nincs elérhető jövőbeli edzés.";
+                    status.style.color = "orange";
+                    return;
+                }
+
                 data.forEach(date => {
                     let opt = document.createElement('option');
-                    opt.value = opt.innerHTML = date;
+                    opt.value = date;
+                    opt.innerHTML = date;
                     select.appendChild(opt);
                 });
             })
-            .catch(() => {
-                document.getElementById('status').innerText = "Hiba az adatok betöltésekor.";
+            .catch(err => {
+                status.innerText = "Hiba az időpontok betöltésekor.";
+                status.style.color = "red";
             });
 
         loadAttendees();
@@ -65,18 +148,22 @@
 
     function loadAttendees() {
         fetch(SCRIPT_URL + "?action=getAttendees")
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error("HTTP hiba: " + res.status);
+                return res.json();
+            })
             .then(data => {
                 allAttendees = data;
                 updateAttendeeList();
-            });
+            })
+            .catch(console.error);
     }
 
     function updateAttendeeList() {
         const selectedDate = document.getElementById('idopont').value;
         const listContainer = document.getElementById('list');
         const box = document.getElementById('attendeeBox');
-        
+
         if (!selectedDate) {
             box.style.display = "none";
             return;
@@ -84,7 +171,7 @@
 
         const filtered = allAttendees.filter(a => a.idopont === selectedDate);
         box.style.display = "block";
-        
+
         if (filtered.length > 0) {
             listContainer.innerHTML = filtered.map(a => `<li>✅ ${a.nev}</li>`).join('');
         } else {
@@ -93,12 +180,12 @@
     }
 
     function submitForm() {
-        const nev = document.getElementById('nev').value;
+        const nev = document.getElementById('nev').value.trim();
         const idopont = document.getElementById('idopont').value;
         const status = document.getElementById('status');
 
         if (!nev || !idopont) {
-            status.innerText = "Kérlek, tölts ki mindent!";
+            status.innerText = "Töltsd ki mindkét mezőt!";
             status.style.color = "red";
             return;
         }
@@ -110,13 +197,18 @@
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: "nev=" + encodeURIComponent(nev) + "&idopont=" + encodeURIComponent(idopont)
+            body: "nev=" + encodeURIComponent(nev) +
+                  "&idopont=" + encodeURIComponent(idopont)
         })
         .then(() => {
             status.innerText = "Sikeres jelentkezés! ✅";
             status.style.color = "green";
             document.getElementById('nev').value = "";
             setTimeout(loadAttendees, 1500);
+        })
+        .catch(() => {
+            status.innerText = "Hiba történt.";
+            status.style.color = "red";
         });
     }
 </script>
