@@ -29,14 +29,17 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyJ7XurMwM9xfOiSPDmv7jEFT5aQ-2BOTKZji5baQ3KQqHzGlhAuBW1JG5CgbJtcH_i/exec";
+    // EZ AZ ÚJ SCRIPT URL, AMIT GENERÁLTÁL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9iXlTAiR1otBXZY08PbmTkOK2eSnMDpcVJDizm0YFFPBTadkKthXADuP00zZ5-dgB/exec";
 
+    // Időpontok betöltése a táblázatból
     window.onload = function() {
         fetch(SCRIPT_URL + "?action=getDates")
             .then(response => response.json())
             .then(data => {
                 const select = document.getElementById('idopont');
                 select.innerHTML = ""; 
+                
                 if (!data || data.length === 0) {
                     select.innerHTML = "<option>Nincs elérhető időpont</option>";
                 } else {
@@ -50,9 +53,11 @@
             })
             .catch(err => {
                 document.getElementById('status').innerText = "Hiba: Frissítsd az oldalt!";
+                console.error(err);
             });
     };
 
+    // Jelentkezés elküldése
     function submitForm() {
         const nev = document.getElementById('nev').value;
         const idopont = document.getElementById('idopont').value;
@@ -78,8 +83,8 @@
             status.style.color = "green";
             document.getElementById('nev').value = "";
         })
-        .catch(() => {
-            status.innerText = "Hiba történt.";
+        .catch(err => {
+            status.innerText = "Hiba történt a mentéskor.";
             status.style.color = "red";
         });
     }
