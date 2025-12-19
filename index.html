@@ -29,10 +29,10 @@
 </div>
 
 <script>
-    // EZ AZ ÚJ SCRIPT URL, AMIT GENERÁLTÁL
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9iXlTAiR1otBXZY08PbmTkOK2eSnMDpcVJDizm0YFFPBTadkKthXADuP00zZ5-dgB/exec";
+    // AZ ÚJ SCRIPT URL-ED BEILLESZTVE
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwP-Z9LFWZOSDuwzT5LqllNae_WMLZ2xOGD8--Aj6bz4k0QytONwlhN5SbGoCTMY8At/exec";
 
-    // Időpontok betöltése a táblázatból
+    // Csak a következő 5 dátum lekérése
     window.onload = function() {
         fetch(SCRIPT_URL + "?action=getDates")
             .then(response => response.json())
@@ -57,7 +57,6 @@
             });
     };
 
-    // Jelentkezés elküldése
     function submitForm() {
         const nev = document.getElementById('nev').value;
         const idopont = document.getElementById('idopont').value;
@@ -84,7 +83,7 @@
             document.getElementById('nev').value = "";
         })
         .catch(err => {
-            status.innerText = "Hiba történt a mentéskor.";
+            status.innerText = "Hiba történt.";
             status.style.color = "red";
         });
     }
