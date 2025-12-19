@@ -1,137 +1,125 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏓 Edzés Jelentkezés</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
+        h2 { color: #333; margin-bottom: 20px; }
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
+        button { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #218838; }
+        #participantList { margin-top: 20px; text-align: left; background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 5px solid #28a745; display: none; }
+        #names { font-weight: bold; color: #495057; margin-top: 5px; }
+        .status-msg { font-size: 14px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
 <div class="card">
     <h2>🏓 Edzés Jelentkezés</h2>
-    <input type="text" id="userName" placeholder="Neved..." required>
+    
+    <input type="text" id="userName" placeholder="Írd be a neved..." required>
     
     <select id="dateSelect" onchange="showParticipants()">
         <option value="">-- Válassz időpontot --</option>
     </select>
 
-    <div id="participantList" style="margin-top: 15px; font-size: 14px; color: #444; text-align: left; background: #f9f9f9; padding: 10px; border-radius: 8px; display: none;">
+    <div id="participantList">
         <strong>Eddigi jelentkezők:</strong>
-        <div id="names"></div>
+        <div id="names">Betöltés...</div>
     </div>
 
-    <button onclick="submitForm()" id="submitBtn" style="margin-top:20px;">OTT LESZEK!</button>
-    <p id="msg"></p>
+    <button onclick="submitForm()" id="submitBtn">OTT LESZEK!</button>
+    <p id="msg" class="status-msg"></p>
 </div>
 
 <script>
-    const scriptURL = <script>
-    const scriptURL = "LÉPTESD_BE_IDE_A_LINKET";
+    // IDE MÁSOLD A SAJÁT LINKEDET AZ IDÉZŐJELEK KÖZÉ:
+    const scriptURL = "IDE_ILLESZD_BE_A_GOOGLE_SCRIPT_LINKET";
     let allParticipants = [];
 
-    // 1. Betöltjük az adatokat a Google Táblázatból
+    // 1. Adatok betöltése a táblázatból
     async function loadParticipants() {
         try {
             const response = await fetch(scriptURL);
             allParticipants = await response.json();
-            setDates(); 
-        } catch (e) { console.log("Hiba", e); setDates(); }
-    }
-
-    function showParticipants() {
-        const selectedDate = document.getElementById('dateSelect').value.trim();
-        const listDiv = document.getElementById('participantList');
-        const namesDiv = document.getElementById('names');
-        
-        if(!selectedDate) { listDiv.style.display = 'none'; return; }
-
-        const filtered = allParticipants
-            .filter(p => p.idopont.trim() === selectedDate)
-            .map(p => p.nev);
-
-        if(filtered.length > 0) {
-            namesDiv.innerHTML = "<strong>" + filtered.join(", ") + "</strong>";
-        } else {
-            namesDiv.innerHTML = "<em>Még nincs jelentkező erre a napra.</em>";
+            setDates();
+        } catch (e) {
+            console.error("Hiba:", e);
+            setDates();
         }
-        listDiv.style.display = 'block';
-    }showParticipants() {
-    const selectedDate = document.getElementById('dateSelect').value.trim();
-    const listDiv = document.getElementById('participantList');
-    const namesDiv = document.getElementById('names');
-    
-    if(!selectedDate) { 
-        listDiv.style.display = 'none'; 
-        return; 
     }
 
-    // Itt történik az összehasonlítás: levágjuk az esetleges szóközöket mindkét oldalon
-    const filtered = allParticipants
-        .filter(p => p.idopont.trim() === selectedDate)
-        .map(p => p.nev);
-
-    if(filtered.length > 0) {
-        namesDiv.innerHTML = "<strong>" + filtered.join(", ") + "</strong>";
-    } else {
-        namesDiv.innerHTML = "<em>Még nincs jelentkező erre a napra.</em>";
-    }
-    listDiv.style.display = 'block';
-}
-    let allParticipants = [];
-
-    // 1. Betöltjük az adatokat a Google Táblázatból
-    async function loadParticipants() {
-        try {
-            const response = await fetch(scriptURL);
-            allParticipants = await response.json();
-            setDates(); // Csak ha megvannak az adatok, generálunk dátumokat
-        } catch (e) { console.log("Hiba az adatok letöltésekor"); setDates(); }
-    }
-
-    // 2. Dátumválasztó generálása (mint korábban)
+    // 2. Dátumok generálása (Kedd, Csüt, Vas)
     function setDates() {
         const select = document.getElementById('dateSelect');
-        let today = new Date();
+        const today = new Date();
         for (let i = 1; i <= 7; i++) {
-            let d = new Date(); d.setDate(today.getDate() + i);
+            let d = new Date();
+            d.setDate(today.getDate() + i);
             let day = d.getDay();
             if (day === 2 || day === 4 || day === 0) {
                 let opt = document.createElement('option');
                 let label = d.toLocaleDateString('hu-HU', {month:'short', day:'numeric', weekday:'short'});
                 let time = (day === 0) ? "9:00 - 12:00" : "19:00 - 21:00";
-                opt.value = label + " | " + time;
-                opt.text = label + " | " + time;
+                let fullValue = label + " | " + time;
+                opt.value = fullValue;
+                opt.text = fullValue;
                 select.add(opt);
             }
         }
     }
 
-    // 3. Ez a függvény szűri ki a neveket az adott napra
+    // 3. Jelentkezők megjelenítése a kiválasztott napra
     function showParticipants() {
-        const selectedDate = document.getElementById('dateSelect').value;
+        const selectedDate = document.getElementById('dateSelect').value.trim();
         const listDiv = document.getElementById('participantList');
         const namesDiv = document.getElementById('names');
         
-        if(!selectedDate) { listDiv.style.display = 'none'; return; }
+        if(!selectedDate) {
+            listDiv.style.display = 'none';
+            return;
+        }
 
         const filtered = allParticipants
-            .filter(p => p.idopont === selectedDate)
+            .filter(p => p.idopont.trim() === selectedDate)
             .map(p => p.nev);
 
-        if(filtered.length > 0) {
-            namesDiv.innerHTML = filtered.join(", ");
-        } else {
-            namesDiv.innerHTML = "Még nincs jelentkező.";
-        }
+        namesDiv.innerHTML = filtered.length > 0 ? filtered.join(", ") : "Még nincs jelentkező.";
         listDiv.style.display = 'block';
     }
 
+    // 4. Jelentkezés elküldése
     function submitForm() {
         const name = document.getElementById('userName').value;
         const date = document.getElementById('dateSelect').value;
-        if(!name || !date) { alert("Név és dátum kötelező!"); return; }
+        const btn = document.getElementById('submitBtn');
+        const msg = document.getElementById('msg');
 
-        document.getElementById('submitBtn').disabled = true;
+        if(!name || !date) { alert("Név és dátum megadása kötelező!"); return; }
+
+        btn.disabled = true;
+        btn.innerText = "Küldés...";
+
         fetch(scriptURL, {
             method: 'POST',
             mode: 'no-cors',
             body: JSON.stringify({név: name, időpont: date})
         }).then(() => {
-            alert("Sikeresen jelentkeztél!");
-            location.reload(); // Frissítjük az oldalt, hogy látszódjon az új név is
+            msg.style.color = "green";
+            msg.innerText = "✅ Sikeresen jelentkeztél!";
+            setTimeout(() => location.reload(), 1500);
+        }).catch(() => {
+            alert("Hiba történt!");
+            btn.disabled = false;
         });
     }
 
-    loadParticipants(); // Indításkor betöltés
+    loadParticipants();
 </script>
+
+</body>
+</html>
