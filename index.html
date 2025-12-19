@@ -1,55 +1,58 @@
-<!DOCTYPE html>
-<html lang="hu">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏓 Edzés Jelentkezés</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
-        h2 { color: #333; font-size: 28px; margin-bottom: 25px; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        input, select, button { width: 100%; padding: 15px; margin: 12px 0; border-radius: 12px; border: 2px solid #eee; font-size: 16px; transition: 0.3s; box-sizing: border-box; }
-        input:focus, select:focus { border-color: #28a745; outline: none; background: #f9fff9; }
-        button { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 18px; margin-top: 20px; }
-        button:hover { background: #218838; transform: translateY(-2px); }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        #participantList { margin-top: 25px; text-align: left; background: #f8f9fa; padding: 20px; border-radius: 12px; border-left: 6px solid #28a745; display: none; }
-        #names { font-weight: 600; color: #444; margin-top: 8px; line-height: 1.6; }
-        .status-msg { margin-top: 15px; font-weight: bold; color: #28a745; }
-    </style>
-</head>
-<body>
+/**
+ * Google Apps Script - Teljes kód az Edzés Jelentkezéshez
+ * Ez a kód az A1 cellától olvassa a dátumokat.
+ */
 
-<div class="card">
-    <h2>🏓 Edzés Jelentkezés</h2>
-    <input type="text" id="userName" placeholder="Írd be a neved..." required>
+function doGet() {
+  // Megjeleníti az index.html oldalt (vagy amit a weboldalad használ)
+  return HtmlService.createTemplateFromFile('index')
+      .evaluate()
+      .setTitle('Edzés Jelentkezés')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// EZ A FÜGGVÉNY OLVASSA BE A DÁTUMOKAT A TÁBLÁZATBÓL
+function getDatesFromSheet() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheets()[0]; // Az első munkalapot olvassa
     
-    <select id="dateSelect" onchange="showParticipants()">
-        <option value="">-- Időpontok betöltése... --</option>
-    </select>
+    // Lekérjük az összes adatot az A oszlopból az 1. sortól kezdve
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 1) return ["Nincs elérhető időpont"];
+    
+    var range = sheet.getRange(1, 1, lastRow, 1);
+    var values = range.getValues();
+    var dates = [];
+    
+    for (var i = 0; i < values.length; i++) {
+      var val = values[i][0].toString().trim();
+      if (val !== "") {
+        dates.push(val);
+      }
+    }
+    return dates;
+  } catch (e) {
+    return ["Hiba: " + e.toString()];
+  }
+}
 
-    <div id="participantList">
-        <strong>Eddigi jelentkezők:</strong>
-        <div id="names"></div>
-    </div>
-
-    <button onclick="submitForm()" id="submitBtn">OTT LESZEK!</button>
-    <p id="msg" class="status-msg"></p>
-</div>
-
-<script>
-    // A TE FRISS LINKED:
-    const scriptURL = "https://script.google.com/macros/s/AKfycbxKmXb2Tl5IbNIIEgX7S_Tz1PyMVSaXA1haXV_hsDN-6O6R5zwCxWUNFCnDtvl95_Eg/exec";
-
-    let allParticipants = [];
-
-    async function loadData() {
-        try {
-            const response = await fetch(scriptURL + "?t=" + new Date().getTime());
-            const data = await response.json();
-            
-            // Adatok szétválogatása
-            allParticipants = data.jelentkezok || [];
-            const rawDates = data.idopontok || [];
-
-            const select = document.getElementById('date
+// EZ A FÜGGVÉNY MENTI EL A JELENTKEZŐT
+function processForm(formData) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    // Megkeresi a 'Jelentkezők' fület, ha nincs, létrehozza vagy az elsőre ír
+    var sheet = ss.getSheetByName("Jelentkezők") || ss.getSheets()[0];
+    
+    sheet.appendRow([
+      new Date(), // Időbélyeg
+      formData.nev, 
+      formData.idopont
+    ]);
+    
+    return "SIKER";
+  } catch (e) {
+    return "HIBA: " + e.toString();
+  }
+}
