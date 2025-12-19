@@ -37,11 +37,10 @@
 </div>
 
 <script>
-    // IDE MÁSOLD A SAJÁT LINKEDET AZ IDÉZŐJELEK KÖZÉ:
-    const scriptURL = "IDE_ILLESZD_BE_A_GOOGLE_SCRIPT_LINKET";
+    // A TE SAJÁT LINKED:
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzGs-2MthjIEHIOG3tBmAbQjbH2G4UC1QUCVYxT1frUUYfCOcmV3k50684U43WKQuP6/exec";
     let allParticipants = [];
 
-    // 1. Adatok betöltése a táblázatból
     async function loadParticipants() {
         try {
             const response = await fetch(scriptURL);
@@ -53,7 +52,6 @@
         }
     }
 
-    // 2. Dátumok generálása (Kedd, Csüt, Vas)
     function setDates() {
         const select = document.getElementById('dateSelect');
         const today = new Date();
@@ -73,7 +71,6 @@
         }
     }
 
-    // 3. Jelentkezők megjelenítése a kiválasztott napra
     function showParticipants() {
         const selectedDate = document.getElementById('dateSelect').value.trim();
         const listDiv = document.getElementById('participantList');
@@ -92,7 +89,6 @@
         listDiv.style.display = 'block';
     }
 
-    // 4. Jelentkezés elküldése
     function submitForm() {
         const name = document.getElementById('userName').value;
         const date = document.getElementById('dateSelect').value;
