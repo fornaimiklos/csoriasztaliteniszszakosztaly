@@ -29,17 +29,14 @@
 </div>
 
 <script>
-    // AZ ÚJ SCRIPT URL-ED BEILLESZTVE
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyJ7XurMwM9xfOiSPDmv7jEFT5aQ-2BOTKZji5baQ3KQqHzGlhAuBW1JG5CgbJtcH_i/exec";
 
-    // Dátumok lekérése
     window.onload = function() {
         fetch(SCRIPT_URL + "?action=getDates")
             .then(response => response.json())
             .then(data => {
                 const select = document.getElementById('idopont');
                 select.innerHTML = ""; 
-                
                 if (!data || data.length === 0) {
                     select.innerHTML = "<option>Nincs elérhető időpont</option>";
                 } else {
@@ -53,11 +50,9 @@
             })
             .catch(err => {
                 document.getElementById('status').innerText = "Hiba: Frissítsd az oldalt!";
-                console.error(err);
             });
     };
 
-    // Beküldés
     function submitForm() {
         const nev = document.getElementById('nev').value;
         const idopont = document.getElementById('idopont').value;
@@ -72,8 +67,23 @@
         status.innerText = "Küldés...";
         status.style.color = "blue";
 
-        // Adatok küldése POST kéréssel
         fetch(SCRIPT_URL, {
             method: "POST",
-            mode: "no-cors", // Fontos a Google Script miatt
+            mode: "no-cors",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "nev=" + encodeURIComponent(nev) + "&idopont=" + encodeURIComponent(idopont)
+        })
+        .then(() => {
+            status.innerText = "Sikeres jelentkezés! ✅";
+            status.style.color = "green";
+            document.getElementById('nev').value = "";
+        })
+        .catch(() => {
+            status.innerText = "Hiba történt.";
+            status.style.color = "red";
+        });
+    }
+</script>
+
+</body>
+</html>
