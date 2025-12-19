@@ -11,9 +11,10 @@
         input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
         button { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
         button:hover { background: #218838; }
+        button:disabled { background: #ccc; }
         #participantList { margin-top: 20px; text-align: left; background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 5px solid #28a745; display: none; }
-        #names { font-weight: bold; color: #495057; margin-top: 5px; }
-        .status-msg { font-size: 14px; margin-top: 10px; }
+        #names { font-weight: bold; color: #495057; margin-top: 5px; line-height: 1.5; }
+        .status-msg { font-size: 14px; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -37,85 +38,41 @@
 </div>
 
 <script>
-    // A TE SAJÁT LINKED:
-    const scriptURL = "https://script.google.com/macros/s/AKfycbzGs-2MthjIEHIOG3tBmAbQjbH2G4UC1QUCVYxT1frUUYfCOcmV3k50684U43WKQuP6/exec";
-    let allParticipants = [];
+    // Beillesztettem az új linkedet:
+    const scriptURL = "https://script.google.com/macros/s/AKfycbx2gBH6JnlnpL3maSo6tsZi9RNYkc_88adp788SLCiH4NwhNhg7nOuxHTUA02b4CPgd/exec";
 
+    let allParticipants = [];
+    let allDates = [];
+
+    // 1. Adatok betöltése a Google Táblázatodból
     async function loadParticipants() {
         try {
-            const response = await fetch(scriptURL);
-            allParticipants = await response.json();
+            const response = await fetch(scriptURL + "?t=" + new Date().getTime());
+            const data = await response.json();
+            allParticipants = data.jelentkezok;
+            allDates = data.idopontok;
             setDates();
         } catch (e) {
             console.error("Hiba:", e);
-            setDates();
         }
     }
 
+    // 2. A menü feltöltése a táblázatod A oszlopából
     function setDates() {
         const select = document.getElementById('dateSelect');
-        const today = new Date();
-        for (let i = 1; i <= 7; i++) {
-            let d = new Date();
-            d.setDate(today.getDate() + i);
-            let day = d.getDay();
-            if (day === 2 || day === 4 || day === 0) {
-                let opt = document.createElement('option');
-                let label = d.toLocaleDateString('hu-HU', {month:'short', day:'numeric', weekday:'short'});
-                let time = (day === 0) ? "9:00 - 12:00" : "19:00 - 21:00";
-                let fullValue = label + " | " + time;
-                opt.value = fullValue;
-                opt.text = fullValue;
-                select.add(opt);
-            }
-        }
+        // Kiszűrjük az üres sorokat és csak a következő 5 dátumot mutatjuk
+        const validDates = allDates.filter(d => d.trim() !== "").slice(0, 5);
+        
+        validDates.forEach(dateText => {
+            let opt = document.createElement('option');
+            opt.value = dateText;
+            opt.text = dateText;
+            select.add(opt);
+        });
     }
 
+    // 3. Jelentkezők listázása
     function showParticipants() {
         const selectedDate = document.getElementById('dateSelect').value.trim();
         const listDiv = document.getElementById('participantList');
         const namesDiv = document.getElementById('names');
-        
-        if(!selectedDate) {
-            listDiv.style.display = 'none';
-            return;
-        }
-
-        const filtered = allParticipants
-            .filter(p => p.idopont.trim() === selectedDate)
-            .map(p => p.nev);
-
-        namesDiv.innerHTML = filtered.length > 0 ? filtered.join(", ") : "Még nincs jelentkező.";
-        listDiv.style.display = 'block';
-    }
-
-    function submitForm() {
-        const name = document.getElementById('userName').value;
-        const date = document.getElementById('dateSelect').value;
-        const btn = document.getElementById('submitBtn');
-        const msg = document.getElementById('msg');
-
-        if(!name || !date) { alert("Név és dátum megadása kötelező!"); return; }
-
-        btn.disabled = true;
-        btn.innerText = "Küldés...";
-
-        fetch(scriptURL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify({név: name, időpont: date})
-        }).then(() => {
-            msg.style.color = "green";
-            msg.innerText = "✅ Sikeresen jelentkeztél!";
-            setTimeout(() => location.reload(), 1500);
-        }).catch(() => {
-            alert("Hiba történt!");
-            btn.disabled = false;
-        });
-    }
-
-    loadParticipants();
-</script>
-
-</body>
-</html>
