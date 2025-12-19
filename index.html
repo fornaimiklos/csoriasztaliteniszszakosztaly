@@ -5,13 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edzés Jelentkezés</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
         .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
         h2 { color: #333; margin-bottom: 25px; }
         input, select { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 15px; background-color: #28a745; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
+        button { width: 100%; padding: 15px; background-color: #28a745; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.3s; margin-top: 10px; }
         button:hover { background-color: #218838; }
         #status { margin-top: 15px; font-weight: bold; }
+        .attendee-list { margin-top: 20px; text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; display: none; }
+        .attendee-list h3 { font-size: 16px; margin: 0 0 10px 0; color: #555; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .attendee-list ul { list-style: none; padding: 0; margin: 0; }
+        .attendee-list li { padding: 6px 0; border-bottom: 1px solid #f1f1f1; font-size: 14px; color: #333; }
+        .attendee-list li:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -20,74 +25,28 @@
     <h2>🏓 Edzés Jelentkezés</h2>
     <input type="text" id="nev" placeholder="Írd be a neved..." required>
     
-    <select id="idopont">
+    <select id="idopont" onchange="updateAttendeeList()">
         <option disabled selected>-- Időpontok betöltése... --</option>
     </select>
 
     <button onclick="submitForm()">OTT LESZEK!</button>
     <p id="status"></p>
+
+    <div id="attendeeBox" class="attendee-list">
+        <h3>Eddigi jelentkezők:</h3>
+        <ul id="list"></ul>
+    </div>
 </div>
 
 <script>
-    // AZ ÚJ SCRIPT URL-ED BEILLESZTVE
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwP-Z9LFWZOSDuwzT5LqllNae_WMLZ2xOGD8--Aj6bz4k0QytONwlhN5SbGoCTMY8At/exec";
+    // AZ ÚJ SCRIPT URL-ED
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxt1U-no0Y2PrQEp73mvodl0870LthztQG82sI5qeJlxtnkn-GUPfSjrNERZwIS5_7F/exec";
 
-    // Csak a következő 5 dátum lekérése
+    let allAttendees = [];
+
     window.onload = function() {
+        // 1. Időpontok betöltése
         fetch(SCRIPT_URL + "?action=getDates")
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
-                const select = document.getElementById('idopont');
-                select.innerHTML = ""; 
-                
-                if (!data || data.length === 0) {
-                    select.innerHTML = "<option>Nincs elérhető időpont</option>";
-                } else {
-                    data.forEach(date => {
-                        let opt = document.createElement('option');
-                        opt.value = date;
-                        opt.innerHTML = date;
-                        select.appendChild(opt);
-                    });
-                }
-            })
-            .catch(err => {
-                document.getElementById('status').innerText = "Hiba: Frissítsd az oldalt!";
-                console.error(err);
-            });
-    };
-
-    function submitForm() {
-        const nev = document.getElementById('nev').value;
-        const idopont = document.getElementById('idopont').value;
-        const status = document.getElementById('status');
-
-        if (!nev || !idopont || idopont.includes("betöltése")) {
-            status.innerText = "Kérlek, tölts ki mindent!";
-            status.style.color = "red";
-            return;
-        }
-
-        status.innerText = "Küldés...";
-        status.style.color = "blue";
-
-        fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: "nev=" + encodeURIComponent(nev) + "&idopont=" + encodeURIComponent(idopont)
-        })
-        .then(() => {
-            status.innerText = "Sikeres jelentkezés! ✅";
-            status.style.color = "green";
-            document.getElementById('nev').value = "";
-        })
-        .catch(err => {
-            status.innerText = "Hiba történt.";
-            status.style.color = "red";
-        });
-    }
-</script>
-
-</body>
-</html>
+                const select = document.getElementById('id
