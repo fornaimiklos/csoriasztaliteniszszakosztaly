@@ -1,77 +1,86 @@
-<!DOCTYPE html>
-<html lang="hu">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏓 Automata Jelentkezés</title>
-    <style>
-        body { font-family: sans-serif; background: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 25px; border-radius: 15px; shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        select, input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
-        button { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
-        #loader { font-size: 14px; color: #666; }
-    </style>
-</head>
-<body>
-
 <div class="card">
     <h2>🏓 Edzés Jelentkezés</h2>
-    <div id="loader">Dátumok betöltése...</div>
-    
     <input type="text" id="userName" placeholder="Neved..." required>
     
-    <select id="dateSelect" style="display:none;">
+    <select id="dateSelect" onchange="showParticipants()">
         <option value="">-- Válassz időpontot --</option>
     </select>
 
-    <button onclick="submitForm()">OTT LESZEK!</button>
+    <div id="participantList" style="margin-top: 15px; font-size: 14px; color: #444; text-align: left; background: #f9f9f9; padding: 10px; border-radius: 8px; display: none;">
+        <strong>Eddigi jelentkezők:</strong>
+        <div id="names"></div>
+    </div>
+
+    <button onclick="submitForm()" id="submitBtn" style="margin-top:20px;">OTT LESZEK!</button>
     <p id="msg"></p>
 </div>
 
 <script>
-    const scriptURL = "IDE_MASOLD_BE_A_GOOGLE_SCRIPT_LINKET";
+    const scriptURL = "IDE_MASOLD_BE_AZ_U_SCRIPT_LINKET";
+    let allParticipants = [];
 
-    // Automatikusan kiszámolja a dátumokat 7 napra előre (Kedd, Csüt, Vas)
+    // 1. Betöltjük az adatokat a Google Táblázatból
+    async function loadParticipants() {
+        try {
+            const response = await fetch(scriptURL);
+            allParticipants = await response.json();
+            setDates(); // Csak ha megvannak az adatok, generálunk dátumokat
+        } catch (e) { console.log("Hiba az adatok letöltésekor"); setDates(); }
+    }
+
+    // 2. Dátumválasztó generálása (mint korábban)
     function setDates() {
         const select = document.getElementById('dateSelect');
-        const loader = document.getElementById('loader');
         let today = new Date();
-        let found = false;
-
         for (let i = 1; i <= 7; i++) {
-            let d = new Date();
-            d.setDate(today.getDate() + i);
+            let d = new Date(); d.setDate(today.getDate() + i);
             let day = d.getDay();
-
             if (day === 2 || day === 4 || day === 0) {
                 let opt = document.createElement('option');
                 let label = d.toLocaleDateString('hu-HU', {month:'short', day:'numeric', weekday:'short'});
                 let time = (day === 0) ? "9:00 - 12:00" : "19:00 - 21:00";
-                opt.value = label + " " + time;
+                opt.value = label + " | " + time;
                 opt.text = label + " | " + time;
                 select.add(opt);
-                found = true;
             }
         }
-        loader.style.display = 'none';
-        select.style.display = 'block';
     }
-    setDates();
+
+    // 3. Ez a függvény szűri ki a neveket az adott napra
+    function showParticipants() {
+        const selectedDate = document.getElementById('dateSelect').value;
+        const listDiv = document.getElementById('participantList');
+        const namesDiv = document.getElementById('names');
+        
+        if(!selectedDate) { listDiv.style.display = 'none'; return; }
+
+        const filtered = allParticipants
+            .filter(p => p.idopont === selectedDate)
+            .map(p => p.nev);
+
+        if(filtered.length > 0) {
+            namesDiv.innerHTML = filtered.join(", ");
+        } else {
+            namesDiv.innerHTML = "Még nincs jelentkező.";
+        }
+        listDiv.style.display = 'block';
+    }
 
     function submitForm() {
         const name = document.getElementById('userName').value;
         const date = document.getElementById('dateSelect').value;
-        if(!name || !date) { alert("Tölts ki mindent!"); return; }
+        if(!name || !date) { alert("Név és dátum kötelező!"); return; }
 
+        document.getElementById('submitBtn').disabled = true;
         fetch(scriptURL, {
             method: 'POST',
             mode: 'no-cors',
             body: JSON.stringify({név: name, időpont: date})
         }).then(() => {
-            document.getElementById('msg').innerText = "✅ Sikeres jelentkezés!";
-            document.getElementById('userName').value = "";
+            alert("Sikeresen jelentkeztél!");
+            location.reload(); // Frissítjük az oldalt, hogy látszódjon az új név is
         });
     }
+
+    loadParticipants(); // Indításkor betöltés
 </script>
-</body>
-</html>
