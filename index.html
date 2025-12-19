@@ -16,7 +16,37 @@
 </div>
 
 <script>
-    const scriptURL = function showParticipants() {
+    const scriptURL = <script>
+    const scriptURL = "LÉPTESD_BE_IDE_A_LINKET";
+    let allParticipants = [];
+
+    // 1. Betöltjük az adatokat a Google Táblázatból
+    async function loadParticipants() {
+        try {
+            const response = await fetch(scriptURL);
+            allParticipants = await response.json();
+            setDates(); 
+        } catch (e) { console.log("Hiba", e); setDates(); }
+    }
+
+    function showParticipants() {
+        const selectedDate = document.getElementById('dateSelect').value.trim();
+        const listDiv = document.getElementById('participantList');
+        const namesDiv = document.getElementById('names');
+        
+        if(!selectedDate) { listDiv.style.display = 'none'; return; }
+
+        const filtered = allParticipants
+            .filter(p => p.idopont.trim() === selectedDate)
+            .map(p => p.nev);
+
+        if(filtered.length > 0) {
+            namesDiv.innerHTML = "<strong>" + filtered.join(", ") + "</strong>";
+        } else {
+            namesDiv.innerHTML = "<em>Még nincs jelentkező erre a napra.</em>";
+        }
+        listDiv.style.display = 'block';
+    }showParticipants() {
     const selectedDate = document.getElementById('dateSelect').value.trim();
     const listDiv = document.getElementById('participantList');
     const namesDiv = document.getElementById('names');
