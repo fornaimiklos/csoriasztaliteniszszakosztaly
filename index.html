@@ -16,6 +16,7 @@
         .attendee-list h3 { font-size: 16px; margin: 0 0 10px 0; color: #555; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
         .attendee-list ul { list-style: none; padding: 0; margin: 0; }
         .attendee-list li { padding: 6px 0; border-bottom: 1px solid #f1f1f1; font-size: 14px; color: #333; }
+        .attendee-list li:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -38,12 +39,13 @@
 </div>
 
 <script>
-    // IDE KELL AZ ÚJ URL, AMIT A "BEVEZETÉS" UTÁN KAPTÁL
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxt1U-no0Y2PrQEp73mvodl0870LthztQG82sI5qeJlxtnkn-GUPfSjrNERZwIS5_7F/exec";
+    // A TE LEGFRISSEBB SCRIPT URL-ED
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiQoXZceb5Ad3j91vBKMJ-Y8GgGn3GK_e2OOb7AmcvpQ1alz5ue-EUf-fmpY0hA66y/exec";
 
     let allAttendees = [];
 
     window.onload = function() {
+        // 1. Időpontok lekérése
         fetch(SCRIPT_URL + "?action=getDates")
             .then(res => res.json())
             .then(data => {
@@ -56,9 +58,10 @@
                 });
             })
             .catch(err => {
-                document.getElementById('status').innerText = "Hiba az időpontok betöltésekor.";
+                document.getElementById('status').innerText = "Hiba az adatok betöltésekor.";
             });
 
+        // 2. Jelentkezők betöltése a háttérben
         loadAttendees();
     };
 
@@ -87,7 +90,7 @@
         if (filtered.length > 0) {
             listContainer.innerHTML = filtered.map(a => `<li>✅ ${a.nev}</li>`).join('');
         } else {
-            listContainer.innerHTML = "<li>Még nincs jelentkező.</li>";
+            listContainer.innerHTML = "<li>Még nincs jelentkező erre a napra.</li>";
         }
     }
 
@@ -105,22 +108,20 @@
         status.innerText = "Küldés...";
         status.style.color = "blue";
 
-        const formData = new URLSearchParams();
-        formData.append("nev", nev);
-        formData.append("idopont", idopont);
-
         fetch(SCRIPT_URL, {
             method: "POST",
             mode: "no-cors",
-            body: formData
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "nev=" + encodeURIComponent(nev) + "&idopont=" + encodeURIComponent(idopont)
         })
         .then(() => {
             status.innerText = "Sikeres jelentkezés! ✅";
             status.style.color = "green";
             document.getElementById('nev').value = "";
-            setTimeout(loadAttendees, 1000);
+            // Várunk egy kicsit, hogy a Google frissítsen, aztán újratöltjük a listát
+            setTimeout(loadAttendees, 1500);
         })
-        .catch(() => {
+        .catch(err => {
             status.innerText = "Hiba történt.";
             status.style.color = "red";
         });
