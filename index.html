@@ -16,7 +16,28 @@
 </div>
 
 <script>
-    const scriptURL = "IDE_MASOLD_BE_AZ_U_SCRIPT_LINKET";
+    const scriptURL = function showParticipants() {
+    const selectedDate = document.getElementById('dateSelect').value.trim();
+    const listDiv = document.getElementById('participantList');
+    const namesDiv = document.getElementById('names');
+    
+    if(!selectedDate) { 
+        listDiv.style.display = 'none'; 
+        return; 
+    }
+
+    // Itt történik az összehasonlítás: levágjuk az esetleges szóközöket mindkét oldalon
+    const filtered = allParticipants
+        .filter(p => p.idopont.trim() === selectedDate)
+        .map(p => p.nev);
+
+    if(filtered.length > 0) {
+        namesDiv.innerHTML = "<strong>" + filtered.join(", ") + "</strong>";
+    } else {
+        namesDiv.innerHTML = "<em>Még nincs jelentkező erre a napra.</em>";
+    }
+    listDiv.style.display = 'block';
+}
     let allParticipants = [];
 
     // 1. Betöltjük az adatokat a Google Táblázatból
