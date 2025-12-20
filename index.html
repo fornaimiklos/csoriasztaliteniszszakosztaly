@@ -1,313 +1,77 @@
 <!DOCTYPE html>
-<html lang="hu">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edzés Jelentkezés</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-        h2 {
-            color: #333;
-            margin-bottom: 5px;
-        }
-        h4 {
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 14px;
-            color: #777;
-        }
-        input, select {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-        button {
-            width: 100%;
-            padding: 15px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin-top: 10px;
-        }
-        button:hover {
-            background-color: #218838;
-        }
-        #status {
-            margin-top: 15px;
-            font-weight: bold;
-        }
-        .attendee-list {
-            margin-top: 20px;
-            text-align: left;
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #eee;
-            display: none;
-        }
-        .attendee-list h3 {
-            font-size: 16px;
-            margin: 0 0 10px 0;
-            color: #555;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 5px;
-        }
-        .attendee-list ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .attendee-list li {
-            padding: 6px 0;
-            border-bottom: 1px solid #f1f1f1;
-            font-size: 14px;
-            color: #333;
-        }
-        .attendee-list li:last-child {
-            border-bottom: none;
-        }
-        .delete-btn {
-            background-color: #dc3545;
-            padding: 6px 10px;
-            color: white;
-            border-radius: 6px;
-            float: right;
-            cursor: pointer;
-            font-size: 12px;
-            border: none;
-        }
-        .delete-btn:hover {
-            background-color: #c82333;
-        }
-    </style>
+  <base target="_top">
+  <style>
+    body { font-family: sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+    .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+    h2 { margin-bottom: 5px; }
+    .subtitle { color: #666; font-size: 0.85em; margin-bottom: 20px; }
+    input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+    button { background-color: #28a745; color: white; font-weight: bold; border: none; cursor: pointer; }
+    .attendee-item { background: #f9f9f9; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9em; }
+    .delete-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; width: auto; margin: 0; }
+  </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🏓 Edzés Jelentkezés</h2>
-    <h4>(Tagoknak nem kell regisztrálni!)</h4>
+  <h2>🏓 Edzés Jelentkezés</h2>
+  <div class="subtitle">(Tagoknak nem kell jelentkezni)</div>
+  
+  <input type="text" id="name" placeholder="Írd be a neved...">
+  <select id="dateSelect"><option>Időpontok betöltése...</option></select>
+  <button onclick="submitData()">OTT LESZEK!</button>
 
-    <input type="text" id="nev" placeholder="Írd be a neved..." required>
-    
-    <select id="idopont" onchange="updateAttendeeList()">
-        <option disabled selected value="">-- Válassz időpontot... --</option>
-    </select>
-
-    <button onclick="submitForm()">OTT LESZEK!</button>
-    <p id="status"></p>
-
-    <div id="attendeeBox" class="attendee-list">
-        <h3>Eddigi jelentkezők:</h3>
-        <ul id="list"></ul>
-    </div>
+  <div id="attendeeList" style="text-align: left; margin-top: 20px;">
+    <strong>Eddigi jelentkezők:</strong>
+    <div id="listContainer"></div>
+  </div>
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzo2LQn_B7pyMLuAv8RkCm9Cz9hJFp-G9nrCbSeej_3pGz7hqskgDoJEs4HzPqCjik8/exec";
+  // Adatok betöltése indításkor
+  window.onload = function() {
+    google.script.run.withSuccessHandler(showData).getInitialData();
+  };
 
-    let allAttendees = [];
-    let clientIp = "";
+  function showData(data) {
+    // Időpontok feltöltése
+    var select = document.getElementById('dateSelect');
+    select.innerHTML = "";
+    data.dates.forEach(d => {
+      var opt = document.createElement('option');
+      opt.value = d; opt.innerText = d;
+      select.appendChild(opt);
+    });
 
-    function fetchIp() {
-        fetch("https://api.ipify.org?format=json")
-            .then(r => r.json())
-            .then(data => {
-                clientIp = data.ip || "";
-            })
-            .catch(() => {
-                clientIp = "";
-            });
+    // Lista megjelenítése
+    renderList(data.attendees);
+  }
+
+  function renderList(attendees) {
+    var container = document.getElementById('listContainer');
+    container.innerHTML = "";
+    attendees.forEach(a => {
+      container.innerHTML += `<div class="attendee-item">
+        <span>${a.nev} (${a.idopont})</span>
+        <button class="delete-btn" onclick="deleteMe('${a.nev}', '${a.idopont}')">Törlés</button>
+      </div>`;
+    });
+  }
+
+  function submitData() {
+    var name = document.getElementById('name').value;
+    var date = document.getElementById('dateSelect').value;
+    if(!name) return alert("Írd be a neved!");
+    google.script.run.withSuccessHandler(() => location.reload()).processAction({action: "add", nev: name, idopont: date});
+  }
+
+  function deleteMe(name, date) {
+    if(confirm("Biztosan törlöd?")) {
+      google.script.run.withSuccessHandler(() => location.reload()).processAction({action: "delete", nev: name, idopont: date});
     }
-
-    window.onload = function() {
-        fetchIp();
-        loadDates();
-        loadAttendees();
-    };
-
-    function loadDates() {
-        const status = document.getElementById('status');
-        fetch(SCRIPT_URL + "?action=getDates")
-            .then(res => {
-                if (!res.ok) throw new Error("HTTP hiba: " + res.status);
-                return res.json();
-            })
-            .then(data => {
-                const s = document.getElementById('idopont');
-                s.innerHTML = "<option disabled selected value=''>-- Válassz időpontot... --</option>";
-
-                if (!Array.isArray(data) || data.length === 0) {
-                    status.innerText = "Nincs elérhető jövőbeli edzés.";
-                    status.style.color = "orange";
-                    return;
-                }
-
-                data.forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d;
-                    opt.textContent = d;
-                    s.appendChild(opt);
-                });
-            })
-            .catch(err => {
-                console.error("Időpontok betöltési hiba:", err);
-                status.innerText = "Hiba az időpontok betöltésekor.";
-                status.style.color = "red";
-            });
-    }
-
-    function loadAttendees() {
-        fetch(SCRIPT_URL + "?action=getAttendees")
-            .then(res => {
-                if (!res.ok) throw new Error("HTTP hiba: " + res.status);
-                return res.json();
-            })
-            .then(data => {
-                allAttendees = data;
-                updateAttendeeList();
-            })
-            .catch(err => {
-                console.error("Jelentkezők betöltése sikertelen:", err);
-            });
-    }
-
-    function updateAttendeeList() {
-        const date = document.getElementById('idopont').value;
-        const box = document.getElementById('attendeeBox');
-        const list = document.getElementById('list');
-
-        if (!date) {
-            box.style.display = "none";
-            return;
-        }
-        box.style.display = "block";
-
-        const filtered = allAttendees.filter(a => a.idopont === date);
-        if (filtered.length === 0) {
-            list.innerHTML = "<li>Még nincs jelentkező erre a napra.</li>";
-            return;
-        }
-
-        list.innerHTML = filtered.map(a =>
-            `<li>✅ ${a.nev}
-                <button class="delete-btn" onclick="deleteSelf('${a.nev}','${a.idopont}')">Törlés</button>
-            </li>`
-        ).join("");
-    }
-
-    function submitForm() {
-        const nev = document.getElementById('nev').value.trim();
-        const date = document.getElementById('idopont').value;
-        const status = document.getElementById('status');
-
-        if (!nev || !date) {
-            status.innerText = "Töltsd ki mindkét mezőt!";
-            status.style.color = "red";
-            return;
-        }
-
-        if (!clientIp) {
-            status.innerText = "Nem sikerült IP-címet lekérni. Frissítsd az oldalt.";
-            status.style.color = "red";
-            return;
-        }
-
-        const count = allAttendees.filter(a => a.idopont === date).length;
-        if (count >= 5) {
-            status.innerText = "Erre az edzésre betelt az 5 fős limit!";
-            status.style.color = "red";
-            return;
-        }
-
-        const ipExists = allAttendees.some(a => a.idopont === date && a.ip === clientIp);
-        if (ipExists) {
-            status.innerText = "Erről az IP-címről már van regisztráció erre az edzésre.";
-            status.style.color = "red";
-            return;
-        }
-
-        status.innerText = "Küldés...";
-        status.style.color = "blue";
-
-        fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body:
-                "action=add" +
-                "&nev=" + encodeURIComponent(nev) +
-                "&idopont=" + encodeURIComponent(date) +
-                "&ip=" + encodeURIComponent(clientIp)
-        })
-        .then(() => {
-            status.innerText = "Sikeres jelentkezés! ✅";
-            status.style.color = "green";
-            setTimeout(loadAttendees, 1000);
-        })
-        .catch(() => {
-            status.innerText = "Hiba történt küldés közben.";
-            status.style.color = "red";
-        });
-    }
-
-    function deleteSelf(nev, idopont) {
-        const me = (document.getElementById('nev').value || "").trim();
-
-        if (!me) {
-            alert("Írd be a saját neved a törléshez!");
-            return;
-        }
-
-        if (me !== nev) {
-            alert("Csak a SAJÁT jelentkezésed törölheted.");
-            return;
-        }
-
-        fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body:
-                "action=delete" +
-                "&nev=" + encodeURIComponent(nev) +
-                "&idopont=" + encodeURIComponent(idopont)
-        })
-        .then(() => {
-            alert("Törölve!");
-            loadAttendees();
-        })
-        .catch(() => {
-            alert("Hiba történt törlés közben.");
-        });
-    }
+  }
 </script>
-
 </body>
 </html>
