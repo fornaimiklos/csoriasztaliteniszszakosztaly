@@ -1,56 +1,85 @@
-function doGet(e) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName("sheet1"); // Győződj meg róla, hogy a fül neve pontosan ez!
-    
-    // 1. DÁTUMOK BEOLVASÁSA (A oszlop)
-    // Csak azokat a sorokat vesszük, amik dátum formátumúak (pontot tartalmaznak)
-    const allAValues = sheet.getRange("A1:A100").getDisplayValues().flat();
-    const dates = allAValues.filter(val => val.trim() !== "" && val.includes("."));
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏓 Edzés Jelentkezés</title>
+  <style>
+    :root { --p: #28a745; --d: #dc3545; }
+    body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
+    .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+    .subtitle { color: #666; font-size: 0.85em; margin-bottom: 20px; display: block; }
+    input, select, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+    button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    button:active { transform: scale(0.98); }
+    .attendee-item { background: #fff; border: 1px solid #eee; padding: 12px; margin: 10px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+    .del-btn { background: var(--d); width: auto; padding: 8px 12px; font-size: 12px; margin: 0; border-radius: 6px; }
+    #status { color: var(--p); font-size: 13px; height: 18px; margin-bottom: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h2>🏓 Edzés Jelentkezés</h2>
+  <span class="subtitle">(Tagoknak NEM kell jelentkezni)</span>
+  <div id="status"></div>
+  <input type="text" id="name" placeholder="Írd be a neved...">
+  <select id="dateSelect"><option>Időpontok betöltése...</option></select>
+  <button id="submitBtn" onclick="submitData()">OTT LESZEK!</button>
+  <div style="text-align: left; margin-top: 25px;">
+    <strong>Jelentkezők:</strong>
+    <div id="listBody"></div>
+  </div>
+</div>
 
-    // 2. JELENTKEZŐK BEOLVASÁSA (C és D oszlop)
-    const fullData = sheet.getDataRange().getDisplayValues();
-    const attendees = [];
-    
-    for (let i = 0; i < fullData.length; i++) {
-      let nev = fullData[i][2];     // C oszlop
-      let idopont = fullData[i][3]; // D oszlop
+<script>
+  // Ide másold az ÚJ URL-t a Google-től!
+  const SCRIPT_URL = "IDE_JÖN_A_SAJÁT_LINKED";
+
+  window.onload = loadData;
+
+  async function loadData() {
+    const statusDiv = document.getElementById('status');
+    statusDiv.style.color = "var(--p)";
+    statusDiv.innerText = "Adatok frissítése...";
+    try {
+      const resp = await fetch(SCRIPT_URL);
+      const data = await resp.json();
       
-      // Kiszűrjük a fejlécet és a technikai sorokat (pl. az A oszlop generált dátumait a C-D-ben)
-      if (nev && idopont && nev.trim() !== "" && nev !== "Név" && !nev.includes("202")) {
-        attendees.push({ nev: nev, idopont: idopont });
-      }
-    }
-
-    const output = { dates: dates, attendees: attendees };
-    return ContentService.createTextOutput(JSON.stringify(output))
-      .setMimeType(ContentService.MimeType.JSON);
+      const select = document.getElementById('dateSelect');
+      select.innerHTML = '<option value="" disabled selected>-- Válassz időpontot --</option>' + 
+                         data.dates.map(d => `<option value="${d}">${d}</option>`).join('');
       
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({error: err.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function doPost(e) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName("sheet1");
-  const params = JSON.parse(e.postData.contents);
-
-  if (params.action === "add") {
-    // Mentés: A=üres, B=Időbélyeg, C=Név, D=Időpont
-    sheet.appendRow(["", new Date(), params.nev, params.idopont]);
-    return ContentService.createTextOutput("Sikeres").setMimeType(ContentService.MimeType.TEXT);
-  }
-
-  if (params.action === "delete") {
-    const data = sheet.getDataRange().getDisplayValues();
-    // Hátulról megyünk előre törléskor
-    for (let i = data.length - 1; i >= 0; i--) {
-      if (data[i][2].trim() === params.nev.trim() && data[i][3].trim() === params.idopont.trim()) {
-        sheet.deleteRow(i + 1);
-        return ContentService.createTextOutput("Törölve").setMimeType(ContentService.MimeType.TEXT);
-      }
+      const list = document.getElementById('listBody');
+      list.innerHTML = data.attendees.map(a => `
+        <div class="attendee-item">
+          <div><b>${a.nev}</b><br><small style="color:#666">${a.idopont}</small></div>
+          <button class="del-btn" onclick="deleteEntry('${a.nev}','${a.idopont}')">Törlés</button>
+        </div>`).join('') || "<p style='color:#999; font-size:14px;'>Még nincs jelentkező.</p>";
+      statusDiv.innerText = "";
+    } catch (e) { 
+      statusDiv.style.color = "red";
+      statusDiv.innerText = "Hiba a kapcsolódáskor!";
     }
   }
-}
+
+  async function submitData() {
+    const n = document.getElementById('name').value.trim();
+    const d = document.getElementById('dateSelect').value;
+    if(!n || !d) return alert("Név és időpont választása kötelező!");
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('status').innerText = "Mentés...";
+    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"add", nev:n, idopont:d}) });
+    document.getElementById('name').value = "";
+    document.getElementById('submitBtn').disabled = false;
+    setTimeout(loadData, 2000);
+  }
+
+  async function deleteEntry(n, d) {
+    if(!confirm("Biztosan törlöd a jelentkezést?")) return;
+    document.getElementById('status').innerText = "Törlés...";
+    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"delete", nev:n, idopont:d}) });
+    setTimeout(loadData, 2000);
+  }
+</script>
+</body>
+</html>
