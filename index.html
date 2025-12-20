@@ -108,7 +108,9 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby0q8h8puCEQo5Cwrsgc-SOyvpih957InIrhyvfmlWQvMSLsKJPItod8XJX5zJEMjWy/exec";
+    // *** FONTOS: ez az aktuális Web App URL ***
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1jURSp5QNOskUwFpxmvXNZXe998uZ9cJ9ibvPRbq6Dyg1c1sGiUrJG-V6FxMUWr_2/exec";
+
     let allAttendees = [];
     let clientIp = "";
 
@@ -128,30 +130,45 @@
     function loadDates() {
         const stat = document.getElementById('status');
         fetch(SCRIPT_URL + "?action=getDates")
-        .then(res => res.json())
-        .then(data => {
-            const sel = document.getElementById("idopont");
-            sel.innerHTML = "<option disabled selected value=''>-- Válassz időpontot --</option>";
-            data.forEach(d => {
-                let opt = document.createElement("option");
-                opt.value = d;
-                opt.textContent = d;
-                sel.appendChild(opt);
+            .then(res => {
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                return res.json();
+            })
+            .then(data => {
+                const sel = document.getElementById("idopont");
+                sel.innerHTML = "<option disabled selected value=''>-- Válassz időpontot --</option>";
+                if (!Array.isArray(data) || data.length === 0) {
+                    stat.style.color = "orange";
+                    stat.textContent = "Nincs elérhető jövőbeli edzés.";
+                    return;
+                }
+                data.forEach(d => {
+                    let opt = document.createElement("option");
+                    opt.value = d;
+                    opt.textContent = d;
+                    sel.appendChild(opt);
+                });
+            })
+            .catch(err => {
+                console.error("getDates hiba:", err);
+                stat.style.color = "red";
+                stat.textContent = "Hiba a kapcsolódáskor!";
             });
-        })
-        .catch(() => {
-            stat.style.color = "red";
-            stat.textContent = "Hiba a kapcsolódáskor!";
-        });
     }
 
     function loadAttendees() {
         fetch(SCRIPT_URL + "?action=getAttendees")
-        .then(r => r.json())
-        .then(data => {
-            allAttendees = data;
-            updateAttendeeList();
-        });
+            .then(r => {
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                return r.json();
+            })
+            .then(data => {
+                allAttendees = Array.isArray(data) ? data : [];
+                updateAttendeeList();
+            })
+            .catch(err => {
+                console.error("getAttendees hiba:", err);
+            });
     }
 
     function updateAttendeeList() {
@@ -169,7 +186,9 @@
         }
 
         list.innerHTML = filtered.map(a =>
-            `<li>✅ ${a.nev} <button class="delete-btn" onclick="deleteSelf('${a.nev}','${a.idopont}')">Törlés</button></li>`
+            `<li>✅ ${a.nev}
+                <button class="delete-btn" onclick="deleteSelf('${a.nev}','${a.idopont}')">Törlés</button>
+            </li>`
         ).join("");
     }
 
@@ -222,6 +241,11 @@
             stat.textContent = "Sikeres jelentkezés! ✔";
             document.getElementById("nev").value = "";
             setTimeout(loadAttendees, 1000);
+        })
+        .catch(err => {
+            console.error("add hiba:", err);
+            stat.style.color = "red";
+            stat.textContent = "Hiba küldés közben!";
         });
     }
 
@@ -242,6 +266,10 @@
         .then(() => {
             alert("Törölve ✔");
             loadAttendees();
+        })
+        .catch(err => {
+            console.error("delete hiba:", err);
+            alert("Hiba történt törlés közben.");
         });
     }
 </script>
