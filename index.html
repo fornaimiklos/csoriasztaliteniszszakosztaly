@@ -172,7 +172,7 @@
   </div>
 
   <script>
-    // IDE a webapp URL-je (ugyanaz, mint Apps Script telepítésnél /exec végű!)
+    // IDE ÍRD BE az Apps Script webapp URL-jét (ami /exec-re végződik)
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjVDYFpH6PHvFpCNeFONm7HZ6JVF00JfHLeUhaeKD03aNcp2biESNjLn0yPLfD4bv4/exec";
 
     const nameInput = document.getElementById("name");
@@ -236,7 +236,6 @@
       });
     }
 
-    // csak a kiválasztott nap jelentkezői látszanak
     function renderSelectedDateRegistrations() {
       registrationsContainer.innerHTML = "";
 
@@ -315,7 +314,6 @@
 
       const selectedSession = allSessions.find(s => s.dateText === dateText);
 
-      // Meccsnap tiltás
       if (selectedSession && selectedSession.isMatchDay) {
         infoMessage.textContent =
           "Várunk szeretettel szurkolóként, de meccsnap miatt nincs lehetőség edzésre jelentkezni ezen a napon. 🙂";
@@ -323,7 +321,6 @@
         return;
       }
 
-      // Max 5 fő / nap
       const countForDate = currentRegistrations.filter(r => r[1] === dateText).length;
       if (countForDate >= 5) {
         infoMessage.textContent =
