@@ -9,7 +9,7 @@
     body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
     .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
     .subtitle { color: #666; font-size: 0.85em; margin-bottom: 20px; display: block; }
-    input, select, button { width: 100%; padding: 14px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+    input, select, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
     button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
     button:active { transform: scale(0.98); }
     button:disabled { background: #ccc; cursor: not-allowed; }
@@ -25,6 +25,7 @@
   <h2>🏓 Edzés Jelentkezés</h2>
   <span class="subtitle">(Tagoknak NEM kell jelentkezni)</span>
   <div id="status"></div>
+  
   <div id="formContainer">
     <input type="text" id="name" placeholder="Írd be a neved...">
     <select id="dateSelect" onchange="checkSelection()">
@@ -33,6 +34,7 @@
     <div id="msgBox"></div>
     <button id="submitBtn" onclick="submitData()">OTT LESZEK!</button>
   </div>
+
   <div style="text-align: left; margin-top: 25px;">
     <strong>Jelentkezők listája:</strong>
     <div id="listBody"></div>
@@ -51,30 +53,42 @@
     try {
       const resp = await fetch(SCRIPT_URL);
       globalData = await resp.json();
+      
       const select = document.getElementById('dateSelect');
       select.innerHTML = '<option value="" disabled selected>-- Válassz időpontot --</option>';
       
-      if(globalData.dates) {
+      if(globalData.dates && globalData.dates.length > 0) {
         globalData.dates.forEach(d => {
-          let opt = document.createElement('option');
-          opt.value = d.full;
-          opt.innerText = d.full;
-          opt.setAttribute('data-match', d.isMatchDay);
-          select.appendChild(opt);
+          // Csak a valódi, nem undefined adatokat tesszük a menübe
+          if(d.full && d.full.indexOf("undefined") === -1) {
+            let opt = document.createElement('option');
+            opt.value = d.full;
+            opt.innerText = d.full;
+            opt.setAttribute('data-match', d.isMatchDay);
+            select.appendChild(opt);
+          }
         });
       }
+      
       renderList();
       statusDiv.innerText = "";
-    } catch (e) { statusDiv.innerText = "Hiba a kapcsolódáskor!"; }
+    } catch (e) { 
+      statusDiv.innerText = "Hiba a kapcsolódáskor!";
+    }
   }
 
   function renderList() {
     const list = document.getElementById('listBody');
-    const validAttendees = globalData.attendees.filter(a => a.nev && a.nev !== "undefined");
-    if (!validAttendees.length) {
+    // Csak azokat mutatjuk, ahol sem a név, sem az időpont nem undefined
+    const validAttendees = globalData.attendees.filter(a => 
+      a.nev && a.nev !== "undefined" && a.idopont && a.idopont !== "undefined"
+    );
+
+    if (validAttendees.length === 0) {
       list.innerHTML = "<p style='color:#999; font-size:14px;'>Még nincs jelentkező.</p>";
       return;
     }
+    
     list.innerHTML = validAttendees.map(a => `
       <div class="attendee-item">
         <div><b>${a.nev}</b><br><small style="color:#666">${a.idopont}</small></div>
@@ -88,18 +102,28 @@
     const selectedOption = select.options[select.selectedIndex];
     const msgBox = document.getElementById('msgBox');
     const btn = document.getElementById('submitBtn');
-    msgBox.innerHTML = ""; btn.disabled = false;
+    
+    msgBox.innerHTML = "";
+    btn.disabled = false;
+
     if (!select.value) return;
 
     if (selectedOption.getAttribute('data-match') === "true") {
-      msgBox.innerHTML = `<div class="warning" style="color:#d93025; background:#fce8e6; border-color:#fad2cf;"><b>Mérkőzés miatt, sajnos nincs lehetőség jelentkezni erre a napra!</b></div>`;
-      btn.disabled = true; return;
+      msgBox.innerHTML = `<div class="warning" style="color:#d93025; background:#fce8e6; border-color:#fad2cf;">
+        <b>Mérkőzés miatt, sajnos nincs lehetőség jelentkezni erre a napra!</b>
+      </div>`;
+      btn.disabled = true;
+      return;
     }
 
     const count = globalData.attendees.filter(a => a.idopont === select.value).length;
     msgBox.innerHTML = `<div class="limit-info">Aktuális létszám: ${count} / 5 fő</div>`;
+
     if (count >= 5) {
-      msgBox.innerHTML += `<div class="warning"><b>Túljelentkezés!</b><br>Kérlek vedd figyelembe, hogy előfordulhat, ha a túljelentkezés ellenére eljössz, hogy lesz olyan amikor csak ülsz és várod hogy felszabaduljon a játéklehetőség!</div>`;
+      msgBox.innerHTML += `<div class="warning">
+        <b>Túljelentkezés!</b><br>
+        Kérlek vedd figyelembe, hogy előfordulhat, ha a túljelentkezés ellenére eljössz, hogy lesz olyan amikor csak ülsz és várod hogy felszabaduljon a játéklehetőség!
+      </div>`;
     }
   }
 
@@ -107,15 +131,18 @@
     const n = document.getElementById('name').value.trim();
     const d = document.getElementById('dateSelect').value;
     if(!n || !d) return alert("Név és időpont választása kötelező!");
+    
     document.getElementById('submitBtn').disabled = true;
-    document.getElementById('status').innerText = "Mentés...";
+    document.getElementById('status').innerText = "Mentés folyamatban...";
+    
     await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"add", nev:n, idopont:d}) });
+    
     document.getElementById('name').value = "";
     setTimeout(loadData, 2000);
   }
 
   async function deleteEntry(n, d) {
-    if(!confirm("Biztosan törlöd?")) return;
+    if(!confirm("Biztosan törlöd a jelentkezést?")) return;
     document.getElementById('status').innerText = "Törlés...";
     await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"delete", nev:n, idopont:d}) });
     setTimeout(loadData, 2000);
