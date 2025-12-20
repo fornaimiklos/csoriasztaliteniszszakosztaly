@@ -175,7 +175,10 @@
       sel.innerHTML =
         "<option disabled selected value=''>-- Válassz időpontot --</option>";
 
-      allDates.forEach((d) => {
+      // Csak az első 5 jövőbeli edzésnap
+      const limited = allDates.slice(0, 5);
+
+      limited.forEach((d) => {
         const opt = document.createElement("option");
         opt.value = d;
         opt.textContent = d;
@@ -212,6 +215,12 @@
 
       if (!nev || !date) {
         setStatus("Töltsd ki mindkét mezőt!", "red");
+        return;
+      }
+
+      // Ha Meccsnap, nem engedünk regisztrálni
+      if (date.indexOf("Meccsnap") !== -1) {
+        setStatus("Meccsnap miatt nézőnek tudsz csak jönni! :)", "red");
         return;
       }
 
