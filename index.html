@@ -93,7 +93,6 @@
         .attendee-list li:last-child {
             border-bottom: none;
         }
-
         .delete-btn {
             background-color: #dc3545;
             padding: 6px 10px;
@@ -131,7 +130,6 @@
 </div>
 
 <script>
-    // ⬅️ IDE RAKD BE PONTOSAN AZ AKTUÁLIS WEB APP URL-T!
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzo2LQn_B7pyMLuAv8RkCm9Cz9hJFp-G9nrCbSeej_3pGz7hqskgDoJEs4HzPqCjik8/exec";
 
     let allAttendees = [];
@@ -140,14 +138,8 @@
     function fetchIp() {
         fetch("https://api.ipify.org?format=json")
             .then(r => r.json())
-            .then(data => {
-                clientIp = data.ip || "";
-                console.log("IP:", clientIp);
-            })
-            .catch(err => {
-                console.error("IP lekérés hiba:", err);
-                clientIp = "";
-            });
+            .then(data => clientIp = data.ip || "")
+            .catch(() => clientIp = "");
     }
 
     window.onload = function() {
@@ -157,77 +149,40 @@
     };
 
     function loadDates() {
-        const status = document.getElementById('status');
         fetch(SCRIPT_URL + "?action=getDates")
-        .then(res => {
-            if (!res.ok) {
-                throw new Error("HTTP hiba: " + res.status);
-            }
-            return res.json();
-        })
-        .then(data => {
-            const s = document.getElementById('idopont');
-            s.innerHTML = "<option disabled selected value=''>-- Válassz időpontot... --</option>";
-
-            if (!Array.isArray(data) || data.length === 0) {
-                status.innerText = "Nincs elérhető jövőbeli edzés.";
-                status.style.color = "orange";
-                return;
-            }
-
-            data.forEach(d => {
-                let opt = document.createElement('option');
-                opt.value = d;
-                opt.innerHTML = d;
-                s.appendChild(opt);
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('idopont');
+                sel.innerHTML = "<option disabled selected value=''>-- Válassz időpontot... --</option>";
+                data.forEach(d => {
+                    let o = document.createElement('option');
+                    o.value = d;
+                    o.textContent = d;
+                    sel.appendChild(o);
+                });
             });
-        })
-        .catch(err => {
-            console.error("Időpontok betöltési hiba:", err);
-            status.innerText = "Hiba az időpontok betöltésekor.";
-            status.style.color = "red";
-        });
     }
 
     function loadAttendees() {
         fetch(SCRIPT_URL + "?action=getAttendees")
-        .then(res => {
-            if (!res.ok) {
-                throw new Error("HTTP hiba: " + res.status);
-            }
-            return res.json();
-        })
-        .then(data => {
-            allAttendees = data;
-            updateAttendeeList();
-        })
-        .catch(err => {
-            console.error("Jelentkezők betöltése sikertelen:", err);
-        });
+            .then(r => r.json())
+            .then(data => {
+                allAttendees = data;
+                updateAttendeeList();
+            });
     }
 
     function updateAttendeeList() {
         const date = document.getElementById('idopont').value;
         const box = document.getElementById('attendeeBox');
         const list = document.getElementById('list');
-
-        if (!date) { 
-            box.style.display = "none"; 
-            return; 
-        }
-        box.style.display = "block";
+        if (!date) { box.style.display="none"; return; }
 
         const filtered = allAttendees.filter(a => a.idopont === date);
-        if (filtered.length === 0) {
-            list.innerHTML = "<li>Még nincs jelentkező erre a napra.</li>";
-            return;
-        }
-
-        list.innerHTML = filtered.map(a =>
-            `<li>✅ ${a.nev}
-                <button class="delete-btn" onclick="deleteSelf('${a.nev}','${a.idopont}')">Törlés</button>
-            </li>`
-        ).join('');
+        box.style.display = "block";
+        list.innerHTML = filtered.length
+            ? filtered.map(a => `<li>✅ ${a.nev} <button class="delete-btn" onclick="deleteSelf('${a.nev}','${a.idopont}')">Törlés</button></li>`).join('')
+            : "<li>Még nincs jelentkező erre a napra.</li>";
     }
 
     function submitForm() {
@@ -236,34 +191,53 @@
         const status = document.getElementById('status');
 
         if (!nev || !date) {
-            status.innerText = "Töltsd ki mindkét mezőt!";
-            status.style.color = "red";
-            return;
-        }
-
-        if (!clientIp) {
-            status.innerText = "Nem sikerült IP-címet lekérni. Próbáld frissíteni az oldalt.";
+            status.textContent = "Töltsd ki mindkét mezőt!";
             status.style.color = "red";
             return;
         }
 
         const count = allAttendees.filter(a => a.idopont === date).length;
         if (count >= 5) {
-            status.innerText = "Erre az edzésre betelt az 5 fős limit!";
+            status.textContent = "Betelt a limit!";
             status.style.color = "red";
             return;
         }
 
         const ipExists = allAttendees.some(a => a.idopont === date && a.ip === clientIp);
         if (ipExists) {
-            status.innerText = "Erről az IP-címről már van regisztráció erre az edzésre.";
+            status.textContent = "Erről az IP-ről már regisztráltak!";
             status.style.color = "red";
             return;
         }
 
-        status.innerText = "Küldés...";
-        status.style.color = "blue";
-
         fetch(SCRIPT_URL, {
             method: "POST",
-            mode
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: `action=add&nev=${encodeURIComponent(nev)}&idopont=${encodeURIComponent(date)}&ip=${encodeURIComponent(clientIp)}`
+        }).then(() => {
+            status.textContent = "Sikeres!";
+            status.style.color = "green";
+            setTimeout(loadAttendees,500);
+        });
+    }
+
+    function deleteSelf(nev,idopont) {
+        const me = document.getElementById('nev').value.trim();
+        if (me !== nev) {
+            alert("Csak a SAJÁT regisztrációdat törölheted.");
+            return;
+        }
+
+        fetch(SCRIPT_URL,{
+            method:"POST",
+            headers:{"Content-Type":"application/x-www-form-urlencoded"},
+            body:`action=delete&nev=${encodeURIComponent(nev)}&idopont=${encodeURIComponent(idopont)}&ip=${encodeURIComponent(clientIp)}`
+        }).then(()=>{
+            alert("Törölve!");
+            loadAttendees();
+        });
+    }
+</script>
+
+</body>
+</html>
