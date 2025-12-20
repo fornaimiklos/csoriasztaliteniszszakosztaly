@@ -172,7 +172,7 @@
   </div>
 
   <script>
-    // Webapp URL (Apps Script)
+    // Apps Script webapp URL
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjVDYFpH6PHvFpCNeFONm7HZ6JVF00JfHLeUhaeKD03aNcp2biESNjLn0yPLfD4bv4/exec";
 
     const nameInput = document.getElementById("name");
@@ -236,7 +236,7 @@
       });
     }
 
-    // csak a kiválasztott naphoz listázzuk a jelentkezőket
+    // *** CSAK a kiválasztott nap jelentkezői látszanak ***
     function renderSelectedDateRegistrations() {
       registrationsContainer.innerHTML = "";
 
@@ -291,7 +291,7 @@
 
     function renderRegistrations(registrations) {
       currentRegistrations = registrations || [];
-      renderSelectedDateRegistrations();
+      renderSelectedDateRegistrations(); // MINDIG csak a kiválasztott nap
     }
 
     async function handleSubmit() {
