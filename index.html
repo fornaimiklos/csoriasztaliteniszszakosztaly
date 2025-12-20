@@ -1,164 +1,306 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🏓 Edzés Jelentkezés</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edzés Jelentkezés</title>
   <style>
-    :root { --p: #28a745; --d: #dc3545; --w: #ffc107; }
-    body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
-    .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-    .subtitle { color: #666; font-size: 0.85em; margin-bottom: 20px; display: block; }
-    input, select, button { width: 100%; padding: 14px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
-    button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    button:active { transform: scale(0.98); }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    .attendee-item { background: #fff; border: 1px solid #eee; padding: 12px; margin: 10px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; text-align: left; }
-    .del-btn { background: var(--d); width: auto; padding: 8px 12px; font-size: 11px; margin: 0; border-radius: 6px; }
-    #status { color: var(--p); font-size: 13px; min-height: 18px; margin-bottom: 10px; font-weight: bold; }
-    .warning { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; font-size: 13px; margin: 10px 0; border: 1px solid #ffeeba; text-align: left; line-height: 1.4; }
-    .limit-info { font-size: 14px; color: #333; font-weight: bold; margin-top: 5px; }
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 450px;
+    }
+    h2 {
+      text-align: center;
+      margin: 0 0 5px 0;
+    }
+    h4 {
+      text-align: center;
+      margin: 0 0 20px 0;
+      font-size: 14px;
+      color: #777;
+    }
+    input,
+    select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      background-color: #1f8a39;
+    }
+    #status {
+      margin-top: 10px;
+      font-weight: bold;
+      min-height: 24px;
+      text-align: center;
+    }
+    .attendee-list {
+      margin-top: 25px;
+      background: #fafafa;
+      border-radius: 10px;
+      border: 1px solid #eee;
+      padding: 15px;
+    }
+    .attendee-list h3 {
+      margin: 0 0 10px 0;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
+    }
+    .attendee-card {
+      background: white;
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #eee;
+      font-size: 14px;
+    }
+    .attendee-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .attendee-name {
+      font-weight: 600;
+    }
+    .attendee-date {
+      font-size: 13px;
+      color: #555;
+    }
+    .delete-btn {
+      background: #dc3545;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .delete-btn:hover {
+      background: #b92432;
+    }
   </style>
 </head>
 <body>
-<div class="card">
-  <h2>🏓 Edzés Jelentkezés</h2>
-  <span class="subtitle">(Tagoknak NEM kell jelentkezni)</span>
-  <div id="status"></div>
-  
-  <div id="formContainer">
-    <input type="text" id="name" placeholder="Írd be a neved...">
-    <select id="dateSelect" onchange="updateView()">
-        <option value="" disabled selected>-- Válassz időpontot --</option>
+  <div class="container">
+    <h2>🏓 Edzés Jelentkezés</h2>
+    <h4>(Tagoknak NEM kell regisztrálni)</h4>
+
+    <input type="text" id="nev" placeholder="Írd be a neved..." />
+
+    <select id="idopont">
+      <option disabled selected value="">-- Válassz időpontot --</option>
     </select>
-    <div id="msgBox"></div>
-    <button id="submitBtn" onclick="submitData()">OTT LESZEK!</button>
+
+    <button onclick="submitForm()">OTT LESZEK!</button>
+    <div id="status"></div>
+
+    <div class="attendee-list">
+      <h3>Jelentkezők listája:</h3>
+      <div id="attendeeCards"></div>
+    </div>
   </div>
 
-  <div style="text-align: left; margin-top: 25px;">
-    <strong>Jelentkezők listája:</strong>
-    <div id="listBody"></div>
-  </div>
-</div>
+  <script>
+    // A TE webapp URL-ed:
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbytoHMMCHpz1bHkttGYcMiBjt-lTYS1_xNM3DZmdR3YkDI7T-HMRTkLiZtZJDZrtUkn/exec";
 
-<script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxwo_O9ffH_YUSD_kcCh6WCy6lhD5NUFvuZ8pY4tm_u1-XJtBX5Q4a5BfTv0IjbNt1d/exec";
-  let globalData = { dates: [], attendees: [] };
+    let allDates = [];
+    let allAttendees = [];
 
-  window.onload = loadData;
+    function setStatus(msg, color) {
+      const st = document.getElementById("status");
+      st.textContent = msg || "";
+      st.style.color = color || "#333";
+    }
 
-  async function loadData() {
-    const statusDiv = document.getElementById('status');
-    statusDiv.innerText = "Adatok frissítése...";
-    try {
-      const resp = await fetch(SCRIPT_URL);
-      globalData = await resp.json();
-      
-      const select = document.getElementById('dateSelect');
-      select.innerHTML = '<option value="" disabled selected>-- Válassz időpontot --</option>';
-      
-      if (globalData.dates && globalData.dates.length > 0) {
-        globalData.dates.forEach(d => {
-          let opt = document.createElement('option');
-          opt.value = d.label;
-          opt.innerText = d.label;
-          opt.setAttribute('data-pure', d.pure);
-          opt.setAttribute('data-match', d.isMatchDay);
-          select.appendChild(opt);
+    function loadData() {
+      setStatus("Adatok betöltése...", "#555");
+
+      fetch(SCRIPT_URL)
+        .then((res) => {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then((data) => {
+          allDates = Array.isArray(data.dates) ? data.dates : [];
+          allAttendees = Array.isArray(data.attendees) ? data.attendees : [];
+
+          allDates = allDates.filter(
+            (d) => typeof d === "string" && d.trim() !== ""
+          );
+
+          fillDateSelect();
+          renderAttendees();
+          setStatus("");
+        })
+        .catch((err) => {
+          console.error("loadData error:", err);
+          setStatus("Hiba a kapcsolódáskor!", "red");
         });
+    }
+
+    function fillDateSelect() {
+      const sel = document.getElementById("idopont");
+      sel.innerHTML =
+        "<option disabled selected value=''>-- Válassz időpontot --</option>";
+
+      // Csak az első 5 jövőbeli edzésnap
+      const limited = allDates.slice(0, 5);
+
+      limited.forEach((d) => {
+        const opt = document.createElement("option");
+        opt.value = d;
+        opt.textContent = d;
+        sel.appendChild(opt);
+      });
+    }
+
+    function renderAttendees() {
+      const box = document.getElementById("attendeeCards");
+      if (!allAttendees.length) {
+        box.innerHTML = "<i>Még nincs jelentkező.</i>";
+        return;
       }
-      
-      updateView();
-      statusDiv.innerText = "";
-    } catch (e) { 
-      statusDiv.style.color = "red";
-      statusDiv.innerText = "Hiba a kapcsolódáskor!";
-    }
-  }
 
-  function updateView() {
-    const select = document.getElementById('dateSelect');
-    const selectedOption = select.options[select.selectedIndex];
-    const msgBox = document.getElementById('msgBox');
-    const btn = document.getElementById('submitBtn');
-    const listBody = document.getElementById('listBody');
-    
-    msgBox.innerHTML = "";
-    btn.disabled = false;
-
-    if (!select.value || select.value === "") {
-      listBody.innerHTML = "<p style='color:#999; font-size:14px;'>Válassz napot a lista megtekintéséhez.</p>";
-      return;
+      box.innerHTML = allAttendees
+        .map((a, idx) => {
+          const nev = a.nev || "";
+          const ido = a.idopont || "";
+          return `
+          <div class="attendee-card">
+            <div class="attendee-info">
+              <span class="attendee-name">${nev}</span>
+              <span class="attendee-date">${ido}</span>
+            </div>
+            <button class="delete-btn" onclick="deleteSelf(${idx})">Törlés</button>
+          </div>`;
+        })
+        .join("");
     }
 
-    const pureDate = selectedOption.getAttribute('data-pure');
-    const isMatch = selectedOption.getAttribute('data-match') === "true";
+    function submitForm() {
+      const nev = document.getElementById("nev").value.trim();
+      const date = document.getElementById("idopont").value;
 
-    if (isMatch) {
-      msgBox.innerHTML = `<div class="warning" style="color:#d93025; background:#fce8e6; border-color:#fad2cf;">
-        <b>Meccsnap miatt, csak szurkolókat várunk, edzésre most nem lesz lehetőséged jelentkezni! :)</b>
-      </div>`;
-      btn.disabled = true;
-    }
+      if (!nev || !date) {
+        setStatus("Töltsd ki mindkét mezőt!", "red");
+        return;
+      }
 
-    // Csak az adott napra jelentkezőket mutatjuk
-    const filtered = globalData.attendees.filter(a => a.idopont === pureDate);
-    
-    if (filtered.length === 0) {
-      listBody.innerHTML = "<p style='color:#999; font-size:14px;'>Erre a napra még nincs jelentkező.</p>";
-    } else {
-      listBody.innerHTML = filtered.map(a => `
-        <div class="attendee-item">
-          <div><b>${a.nev}</b></div>
-          <button class="del-btn" onclick="deleteEntry('${a.nev}','${pureDate}')">Törlés</button>
-        </div>`).join('');
-    }
+      // Ha Meccsnap, nem engedünk regisztrálni
+      if (date.indexOf("Meccsnap") !== -1) {
+        setStatus("Meccsnap miatt nézőnek tudsz csak jönni! :)", "red");
+        return;
+      }
 
-    if (!isMatch) {
-      const count = filtered.length;
-      msgBox.innerHTML = `<div class="limit-info">Aktuális létszám: ${count} / 5 fő</div>`;
+      // 5 fős limit adott napra
+      const count = allAttendees.filter((a) => a.idopont === date).length;
       if (count >= 5) {
-        msgBox.innerHTML += `<div class="warning">
-          <b>Túljelentkezés!</b><br>
-          Kérlek vedd figyelembe, hogy előfordulhat, ha a túljelentkezés ellenére eljössz, hogy lesz olyan amikor csak ülsz és várod hogy felszabaduljon a játéklehetőség!
-        </div>`;
+        setStatus("Erre az edzésre betelt az 5 fős limit!", "red");
+        return;
       }
-    }
-  }
 
-  async function submitData() {
-    const n = document.getElementById('name').value.trim();
-    const select = document.getElementById('dateSelect');
-    if (!select.value) return alert("Válassz időpontot!");
-    const pureDate = select.options[select.selectedIndex].getAttribute('data-pure');
-    
-    if (!n) return alert("Írd be a neved!");
-    document.getElementById('submitBtn').disabled = true;
-    document.getElementById('status').innerText = "Mentés...";
-    
-    const url = `${SCRIPT_URL}?action=add&nev=${encodeURIComponent(n)}&idopont=${encodeURIComponent(pureDate)}`;
-    
-    try {
-      await fetch(url, { method: 'POST' });
-      document.getElementById('name').value = "";
-      await loadData();
-    } catch (e) { 
-      alert("Hiba mentés közben."); 
-      document.getElementById('submitBtn').disabled = false; 
-    }
-  }
+      setStatus("Küldés...", "blue");
 
-  async function deleteEntry(nev, idopont) {
-    if (!confirm("Biztosan törlöd a jelentkezést?")) return;
-    document.getElementById('status').innerText = "Törlés...";
-    const url = `${SCRIPT_URL}?action=delete&nev=${encodeURIComponent(nev)}&idopont=${encodeURIComponent(idopont)}`;
-    try { 
-      await fetch(url, { method: 'POST' }); 
-      await loadData(); 
-    } catch (e) { 
-      alert("Hiba törléskor."); 
+      const body =
+        "action=add" +
+        "&nev=" +
+        encodeURIComponent(nev) +
+        "&idopont=" +
+        encodeURIComponent(date);
+
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body,
+      })
+        .then(() => {
+          setStatus("Sikeres jelentkezés! ✅", "green");
+          document.getElementById("nev").value = "";
+          setTimeout(loadData, 800);
+        })
+        .catch((err) => {
+          console.error("submit error:", err);
+          setStatus("Hiba történt a mentéskor.", "red");
+        });
     }
-  }
-</script>
+
+    function deleteSelf(index) {
+      const nevInput = document.getElementById("nev").value.trim();
+      const row = allAttendees[index];
+      if (!row) return;
+
+      if (!nevInput) {
+        alert("Írd be a saját neved a törléshez!");
+        return;
+      }
+      if (nevInput !== row.nev) {
+        alert("Csak a SAJÁT jelentkezésed törölheted!");
+        return;
+      }
+
+      if (
+        !confirm(
+          `Biztos törlöd a jelentkezésed?\n${row.nev} – ${row.idopont}`
+        )
+      ) {
+        return;
+      }
+
+      const body =
+        "action=delete" +
+        "&nev=" +
+        encodeURIComponent(row.nev) +
+        "&idopont=" +
+        encodeURIComponent(row.idopont);
+
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body,
+      })
+        .then(() => {
+          alert("Törölve ✅");
+          loadData();
+        })
+        .catch((err) => {
+          console.error("delete error:", err);
+          alert("Hiba történt törlés közben.");
+        });
+    }
+
+    window.onload = loadData;
+  </script>
 </body>
 </html>
