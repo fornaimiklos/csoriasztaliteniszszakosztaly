@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Edzés Jelentkezés</title>
+  <title>🏓 Edzés Jelentkezés</title>
   <style>
     :root { --p: #28a745; --d: #dc3545; --w: #ffc107; }
     body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
@@ -54,34 +54,27 @@
       const select = document.getElementById('dateSelect');
       select.innerHTML = '<option value="" disabled selected>-- Válassz időpontot --</option>';
       
-      if(globalData.dates && globalData.dates.length > 0) {
+      if(globalData.dates) {
         globalData.dates.forEach(d => {
-          if(d.full && d.full !== "undefined") {
-            let opt = document.createElement('option');
-            opt.value = d.full;
-            opt.innerText = d.full;
-            opt.setAttribute('data-match', d.isMatchDay);
-            select.appendChild(opt);
-          }
+          let opt = document.createElement('option');
+          opt.value = d.full;
+          opt.innerText = d.full;
+          opt.setAttribute('data-match', d.isMatchDay);
+          select.appendChild(opt);
         });
       }
       renderList();
       statusDiv.innerText = "";
-    } catch (e) { 
-      statusDiv.innerText = "Hiba a kapcsolódáskor!";
-    }
+    } catch (e) { statusDiv.innerText = "Hiba a kapcsolódáskor!"; }
   }
 
   function renderList() {
     const list = document.getElementById('listBody');
-    // Csak az érvényes jelentkezőket jelenítjük meg
-    const validAttendees = globalData.attendees.filter(a => a.nev && a.nev !== "undefined" && a.idopont && a.idopont !== "undefined");
-    
-    if (validAttendees.length === 0) {
+    const validAttendees = globalData.attendees.filter(a => a.nev && a.nev !== "undefined");
+    if (!validAttendees.length) {
       list.innerHTML = "<p style='color:#999; font-size:14px;'>Még nincs jelentkező.</p>";
       return;
     }
-    
     list.innerHTML = validAttendees.map(a => `
       <div class="attendee-item">
         <div><b>${a.nev}</b><br><small style="color:#666">${a.idopont}</small></div>
@@ -95,25 +88,18 @@
     const selectedOption = select.options[select.selectedIndex];
     const msgBox = document.getElementById('msgBox');
     const btn = document.getElementById('submitBtn');
-    msgBox.innerHTML = "";
-    btn.disabled = false;
+    msgBox.innerHTML = ""; btn.disabled = false;
     if (!select.value) return;
 
     if (selectedOption.getAttribute('data-match') === "true") {
-      msgBox.innerHTML = `<div class="warning" style="color:#d93025; background:#fce8e6; border-color:#fad2cf;">
-        <b>Mérkőzés miatt, sajnos nincs lehetőség jelentkezni erre a napra!</b>
-      </div>`;
-      btn.disabled = true;
-      return;
+      msgBox.innerHTML = `<div class="warning" style="color:#d93025; background:#fce8e6; border-color:#fad2cf;"><b>Mérkőzés miatt, sajnos nincs lehetőség jelentkezni erre a napra!</b></div>`;
+      btn.disabled = true; return;
     }
 
     const count = globalData.attendees.filter(a => a.idopont === select.value).length;
     msgBox.innerHTML = `<div class="limit-info">Aktuális létszám: ${count} / 5 fő</div>`;
     if (count >= 5) {
-      msgBox.innerHTML += `<div class="warning">
-        <b>Túljelentkezés!</b><br>
-        Kérlek vedd figyelembe, hogy előfordulhat, ha a túljelentkezés ellenére eljössz, hogy lesz olyan amikor csak ülsz és várod hogy felszabaduljon a játéklehetőség!
-      </div>`;
+      msgBox.innerHTML += `<div class="warning"><b>Túljelentkezés!</b><br>Kérlek vedd figyelembe, hogy előfordulhat, ha a túljelentkezés ellenére eljössz, hogy lesz olyan amikor csak ülsz és várod hogy felszabaduljon a játéklehetőség!</div>`;
     }
   }
 
@@ -122,7 +108,7 @@
     const d = document.getElementById('dateSelect').value;
     if(!n || !d) return alert("Név és időpont választása kötelező!");
     document.getElementById('submitBtn').disabled = true;
-    document.getElementById('status').innerText = "Mentés folyamatban...";
+    document.getElementById('status').innerText = "Mentés...";
     await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"add", nev:n, idopont:d}) });
     document.getElementById('name').value = "";
     setTimeout(loadData, 2000);
