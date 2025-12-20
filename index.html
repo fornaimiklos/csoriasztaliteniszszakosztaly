@@ -9,7 +9,7 @@
     body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
     .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
     .subtitle { color: #666; font-size: 0.85em; margin-bottom: 20px; display: block; }
-    input, select, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+    input, select, button { width: 100%; padding: 14px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
     button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
     button:active { transform: scale(0.98); }
     .attendee-item { background: #fff; border: 1px solid #eee; padding: 12px; margin: 10px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; text-align: left; }
@@ -22,7 +22,7 @@
   <h2>🏓 Edzés Jelentkezés</h2>
   <span class="subtitle">(Tagoknak NEM kell jelentkezni)</span>
   <div id="status"></div>
-  <input type="text" id="name" placeholder="Írd be a neved...">
+  <input type="text" id="name" placeholder="Neved...">
   <select id="dateSelect"><option>Időpontok betöltése...</option></select>
   <button id="submitBtn" onclick="submitData()">OTT LESZEK!</button>
   <div style="text-align: left; margin-top: 25px;">
@@ -32,8 +32,8 @@
 </div>
 
 <script>
-  // Ide másold az ÚJ URL-t a Google-től!
-  const SCRIPT_URL = "IDE_JÖN_A_SAJÁT_LINKED";
+  // Ide másold a saját Google Webalkalmazás URL-ed!
+  const SCRIPT_URL = "IDE_MÁSOLD_A_LINKET";
 
   window.onload = loadData;
 
@@ -44,11 +44,9 @@
     try {
       const resp = await fetch(SCRIPT_URL);
       const data = await resp.json();
-      
       const select = document.getElementById('dateSelect');
       select.innerHTML = '<option value="" disabled selected>-- Válassz időpontot --</option>' + 
                          data.dates.map(d => `<option value="${d}">${d}</option>`).join('');
-      
       const list = document.getElementById('listBody');
       list.innerHTML = data.attendees.map(a => `
         <div class="attendee-item">
