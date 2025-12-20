@@ -35,9 +35,7 @@
       justify-content: center;
     }
 
-    h1 span.icon {
-      font-size: 26px;
-    }
+    h1 span.icon { font-size: 26px; }
 
     h2 { font-size: 14px; margin: 0 0 20px; text-align: center; color: #555; }
 
@@ -65,9 +63,7 @@
       background: #ffffff;
     }
 
-    select {
-      cursor: pointer;
-    }
+    select { cursor: pointer; }
 
     button {
       margin-top: 10px;
@@ -78,17 +74,10 @@
       box-shadow: 0 6px 16px rgba(0,0,0,0.25);
     }
 
-    #submitBtn {
-      background: linear-gradient(135deg,#ff4b73,#ff7b3d);
-    }
+    #submitBtn { background: linear-gradient(135deg,#ff4b73,#ff7b3d); }
+    #deleteBtn { background: #6c757d; }
 
-    #deleteBtn {
-      background: #6c757d;
-    }
-
-    button:hover {
-      filter: brightness(1.05);
-    }
+    button:hover { filter: brightness(1.05); }
 
     button:disabled {
       opacity: 0.6;
@@ -96,9 +85,7 @@
       box-shadow: none;
     }
 
-    .field {
-      margin-bottom: 14px;
-    }
+    .field { margin-bottom: 14px; }
 
     .message {
       margin-top: 10px;
@@ -172,8 +159,8 @@
   </div>
 
   <script>
-    // IDE ÍRD BE az Apps Script webapp URL-jét (ami /exec-re végződik)
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjVDYFpH6PHvFpCNeFONm7HZ6JVF00JfHLeUhaeKD03aNcp2biESNjLn0yPLfD4bv4/exec";
+    // Apps Script webapp URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzyKjTLahMgJ9oKXEKUaCWB3uMQJA3iOCgGN-uvjw3CatB6GymuMZcpUVBtyArANEoB/exec";
 
     const nameInput = document.getElementById("name");
     const dateSelect = document.getElementById("date");
@@ -236,6 +223,7 @@
       });
     }
 
+    // csak a kiválasztott nap jelentkezői látszanak
     function renderSelectedDateRegistrations() {
       registrationsContainer.innerHTML = "";
 
@@ -314,6 +302,7 @@
 
       const selectedSession = allSessions.find(s => s.dateText === dateText);
 
+      // Meccsnap tiltás
       if (selectedSession && selectedSession.isMatchDay) {
         infoMessage.textContent =
           "Várunk szeretettel szurkolóként, de meccsnap miatt nincs lehetőség edzésre jelentkezni ezen a napon. 🙂";
@@ -321,6 +310,7 @@
         return;
       }
 
+      // Max 5 fő / nap
       const countForDate = currentRegistrations.filter(r => r[1] === dateText).length;
       if (countForDate >= 5) {
         infoMessage.textContent =
