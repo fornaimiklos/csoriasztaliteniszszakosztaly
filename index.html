@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🏓 Edzés Jelentkezés</title>
   <style>
+    :root { --p: #28a745; --d: #dc3545; }
     body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
-    .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; }
-    h2 { margin-bottom: 5px; }
+    .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
     .subtitle { color: #666; font-size: 0.85em; margin-bottom: 20px; display: block; }
-    input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
-    button { background: #28a745; color: white; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; }
+    input, select, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+    button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
     button:active { transform: scale(0.98); }
-    .attendee-item { background: #f8f9fa; padding: 12px; margin: 8px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #28a745; text-align: left; }
-    .del-btn { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; width: auto; font-size: 12px; margin: 0; }
-    #status { color: #28a745; font-size: 12px; height: 15px; margin-bottom: 10px; }
+    .attendee-item { background: #fff; border: 1px solid #eee; padding: 12px; margin: 10px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .del-btn { background: var(--d); width: auto; padding: 8px 12px; font-size: 12px; margin: 0; border-radius: 6px; }
+    #status { color: var(--p); font-size: 13px; height: 18px; margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -25,15 +25,15 @@
   <input type="text" id="name" placeholder="Írd be a neved...">
   <select id="dateSelect"><option>Időpontok betöltése...</option></select>
   <button id="submitBtn" onclick="submitData()">OTT LESZEK!</button>
-  <div style="margin-top: 25px; text-align: left;">
+  <div style="text-align: left; margin-top: 25px;">
     <strong>Jelentkezők:</strong>
     <div id="listBody"></div>
   </div>
 </div>
 
 <script>
-  // Illeszd be ide a Webalkalmazás URL-t!
-  const SCRIPT_URL = "IDE_MÁSOLD_A_LINKET";
+  // A te saját Webalkalmazás URL-ed (Ezt az Összeállításnál kapod meg)
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwdp0zen-DoUxJoF7a6-f-Nw8c63FGT2dGL9q6KdKFA0kDEXPDY9eph6dhhXG7qOtC_/exec";
 
   window.onload = loadData;
 
@@ -42,6 +42,7 @@
     try {
       const resp = await fetch(SCRIPT_URL);
       const data = await resp.json();
+      
       const select = document.getElementById('dateSelect');
       select.innerHTML = '<option value="" disabled selected>-- Válassz időpontot --</option>' + 
                          data.dates.map(d => `<option value="${d}">${d}</option>`).join('');
@@ -49,11 +50,11 @@
       const list = document.getElementById('listBody');
       list.innerHTML = data.attendees.map(a => `
         <div class="attendee-item">
-          <div><b>${a.nev}</b><br><small>${a.idopont}</small></div>
+          <div><b>${a.nev}</b><br><small style="color:#666">${a.idopont}</small></div>
           <button class="del-btn" onclick="deleteEntry('${a.nev}','${a.idopont}')">Törlés</button>
         </div>`).join('') || "<p style='color:#999;'>Még nincs jelentkező.</p>";
       document.getElementById('status').innerText = "";
-    } catch (e) { document.getElementById('status').innerText = "Hiba!"; }
+    } catch (e) { document.getElementById('status').innerText = "Hiba a kapcsolódáskor!"; }
   }
 
   async function submitData() {
@@ -72,7 +73,7 @@
   }
 
   async function deleteEntry(n, d) {
-    if(!confirm("Biztosan törlöd?")) return;
+    if(!confirm("Biztosan törlöd a jelentkezést?")) return;
     document.getElementById('status').innerText = "Törlés...";
     await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"delete", nev:n, idopont:d}) });
     setTimeout(loadData, 1500);
