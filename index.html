@@ -4,113 +4,76 @@
   <base target="_top">
   <meta charset="UTF-8">
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-    .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-    h2 { margin-bottom: 5px; color: #1c1e21; }
-    .subtitle { color: #65676b; font-size: 0.9em; margin-bottom: 20px; }
-    input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
-    button { background-color: #28a745; color: white; font-weight: bold; border: none; cursor: pointer; transition: background 0.3s; }
-    button:hover { background-color: #218838; }
-    .attendee-item { background: #f8f9fa; padding: 12px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #28a745; text-align: left; }
-    .delete-btn { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; width: auto; margin: 0; font-size: 12px; }
-    #status { font-size: 0.8em; color: #666; margin-top: 10px; }
+    body { font-family: sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+    .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+    input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+    button { background-color: #28a745; color: white; font-weight: bold; border: none; cursor: pointer; }
+    .attendee-item { background: #f9f9f9; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9em; text-align: left; }
+    .delete-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; width: auto; margin: 0; }
   </style>
 </head>
 <body>
 
 <div class="container">
   <h2>🏓 Edzés Jelentkezés</h2>
-  <div class="subtitle">(Tagoknak nem kell jelentkezni)</div>
-  
   <input type="text" id="name" placeholder="Írd be a neved...">
   <select id="dateSelect"><option>Időpontok betöltése...</option></select>
-  <button id="submitBtn" onclick="submitData()">OTT LESZEK!</button>
-  <div id="status"></div>
+  <button id="mainBtn" onclick="submitData()">OTT LESZEK!</button>
 
-  <div id="attendeeList" style="text-align: left; margin-top: 25px;">
-    <strong>Eddigi jelentkezők:</strong>
+  <div id="attendeeList" style="margin-top: 20px;">
+    <strong>Jelentkezők:</strong>
     <div id="listContainer"></div>
   </div>
 </div>
 
 <script>
-  // Automatikus betöltés
   window.onload = function() {
-    loadData();
+    refreshData();
   };
 
-  function loadData() {
-    document.getElementById('status').innerText = "Adatok frissítése...";
-    google.script.run.withSuccessHandler(showData).getInitialData();
-  }
+  function refreshData() {
+    google.script.run.withSuccessHandler(function(data) {
+      // Időpontok feltöltése
+      var select = document.getElementById('dateSelect');
+      select.innerHTML = "";
+      if (data.dates.length > 0) {
+        data.dates.forEach(function(d) {
+          var opt = document.createElement('option');
+          opt.value = d; opt.innerText = d;
+          select.appendChild(opt);
+        });
+      } else {
+        select.innerHTML = "<option>Nincsenek időpontok</option>";
+      }
 
-  function showData(data) {
-    // Időpontok feltöltése
-    var select = document.getElementById('dateSelect');
-    select.innerHTML = "";
-    
-    if (data.dates.length === 0) {
-      select.innerHTML = "<option>Nincs elérhető időpont</option>";
-    } else {
-      data.dates.forEach(d => {
-        var opt = document.createElement('option');
-        opt.value = d;
-        opt.innerText = d;
-        select.appendChild(opt);
+      // Lista megjelenítése
+      var container = document.getElementById('listContainer');
+      container.innerHTML = "";
+      data.attendees.forEach(function(a) {
+        container.innerHTML += `<div class="attendee-item">
+          <span>${a.nev}<br><small>${a.idopont}</small></span>
+          <button class="delete-btn" onclick="deleteMe('${a.nev}', '${a.idopont}')">Törlés</button>
+        </div>`;
       });
-    }
-
-    // Jelentkezők listája
-    renderList(data.attendees);
-    document.getElementById('status').innerText = "";
-  }
-
-  function renderList(attendees) {
-    var container = document.getElementById('listContainer');
-    container.innerHTML = "";
-    
-    if (attendees.length === 0) {
-      container.innerHTML = "<p style='color:#999; font-size:0.9em;'>Még nincs jelentkező.</p>";
-      return;
-    }
-
-    attendees.forEach(a => {
-      var div = document.createElement('div');
-      div.className = 'attendee-item';
-      div.innerHTML = `
-        <div>
-          <div style="font-weight:bold;">${a.nev}</div>
-          <div style="font-size:0.8em; color:#666;">${a.idopont}</div>
-        </div>
-        <button class="delete-btn" onclick="deleteMe('${a.nev}', '${a.idopont}')">Törlés</button>
-      `;
-      container.appendChild(div);
-    });
+    }).getInitialData();
   }
 
   function submitData() {
     var name = document.getElementById('name').value;
     var date = document.getElementById('dateSelect').value;
+    if(!name) return alert("Add meg a neved!");
     
-    if(!name || name.trim() === "") return alert("Kérlek, írd be a neved!");
-    if(date.includes("betöltése") || date.includes("Nincs")) return alert("Válassz egy érvényes időpontot!");
-
-    document.getElementById('submitBtn').disabled = true;
-    document.getElementById('status').innerText = "Mentés folyamatban...";
-
-    google.script.run.withSuccessHandler(() => {
+    document.getElementById('mainBtn').disabled = true;
+    google.script.run.withSuccessHandler(function() {
       document.getElementById('name').value = "";
-      document.getElementById('submitBtn').disabled = false;
-      loadData();
+      document.getElementById('mainBtn').disabled = false;
+      refreshData();
     }).processAction({action: "add", nev: name, idopont: date});
   }
 
   function deleteMe(name, date) {
-    if(confirm("Biztosan törlöd a jelentkezésed? (" + name + ")")) {
-      document.getElementById('status').innerText = "Törlés folyamatban...";
-      google.script.run.withSuccessHandler(() => {
-        loadData();
-      }).processAction({action: "delete", nev: name, idopont: date});
+    if(confirm("Biztosan törlöd?")) {
+      google.script.run.withSuccessHandler(refreshData).processAction({action: "delete", nev: name, idopont: date});
     }
   }
 </script>
