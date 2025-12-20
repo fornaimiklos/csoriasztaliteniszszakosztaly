@@ -173,4 +173,73 @@
         if (!date) { box.style.display = "none"; return; }
         box.style.display = "block";
 
-        const filtered = allAttendees.filter(a => a.idopont === da
+        const filtered = allAttendees.filter(a => a.idopont === date);
+        if (filtered.length === 0) {
+            list.innerHTML = "<li>Még nincs jelentkező erre a napra.</li>";
+            return;
+        }
+
+        list.innerHTML = filtered.map(a =>
+            `<li>✅ ${a.nev} 
+                <button class="delete-btn" onclick="deleteSelf('${a.nev}','${a.idopont}')">Törlés</button>
+            </li>`
+        ).join('');
+    }
+
+    function submitForm() {
+        const nev = document.getElementById('nev').value.trim();
+        const date = document.getElementById('idopont').value;
+        const status = document.getElementById('status');
+
+        if (!nev || !date) {
+            status.innerText = "Töltsd ki mindkét mezőt!";
+            status.style.color = "red";
+            return;
+        }
+
+        const count = allAttendees.filter(a => a.idopont === date).length;
+        if (count >= 5) {
+            status.innerText = "Erre az edzésre betelt az 5 fős limit!";
+            status.style.color = "red";
+            return;
+        }
+
+        status.innerText = "Küldés...";
+        status.style.color = "blue";
+
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "action=add&nev=" + encodeURIComponent(nev) +
+                  "&idopont=" + encodeURIComponent(date)
+        })
+        .then(() => {
+            status.innerText = "Sikeres jelentkezés! ✅";
+            status.style.color = "green";
+            document.getElementById('nev').value = "";
+            setTimeout(loadAttendees, 1500);
+        });
+    }
+
+    function deleteSelf(nev,idopont) {
+        const me = document.getElementById('nev').value.trim();
+        if (me !== nev) {
+            alert("Csak a SAJÁT jelentkezésed törölheted.\nÍrd be a neved!");
+            return;
+        }
+
+        fetch(SCRIPT_URL, {
+            method:"POST",
+            mode:"no-cors",
+            headers:{"Content-Type":"application/x-www-form-urlencoded"},
+            body:"action=delete&nev="+encodeURIComponent(nev)+"&idopont="+encodeURIComponent(idopont)
+        }).then(()=>{
+            alert("Törölve!");
+            loadAttendees();
+        });
+    }
+</script>
+
+</body>
+</html>
