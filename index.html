@@ -18,7 +18,6 @@
     #status { color: var(--p); font-size: 13px; min-height: 18px; margin-bottom: 10px; font-weight: bold; }
     .warning { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; font-size: 13px; margin: 10px 0; border: 1px solid #ffeeba; text-align: left; line-height: 1.4; }
     .limit-info { font-size: 14px; color: #333; font-weight: bold; margin-top: 5px; }
-    .list-title { margin-top: 25px; border-top: 2px solid #eee; padding-top: 15px; display: block; }
   </style>
 </head>
 <body>
@@ -36,8 +35,8 @@
     <button id="submitBtn" onclick="submitData()">OTT LESZEK!</button>
   </div>
 
-  <div style="text-align: left;">
-    <strong class="list-title" id="listHeader">Válassz napot a lista megtekintéséhez</strong>
+  <div style="text-align: left; margin-top: 25px;">
+    <strong id="listHeader">Jelentkezők listája:</strong>
     <div id="listBody"></div>
   </div>
 </div>
@@ -56,21 +55,17 @@
       globalData = await resp.json();
       
       const select = document.getElementById('dateSelect');
-      const currentVal = select.value;
       select.innerHTML = '<option value="" disabled selected>-- Válassz időpontot --</option>';
       
-      if(globalData.dates) {
-        globalData.dates.slice(0, 5).forEach(d => {
-          let opt = document.createElement('option');
-          opt.value = d.label; // Ez a teljes szöveg (A + B oszlop)
-          opt.innerText = d.label;
-          opt.setAttribute('data-pure', d.pure); // Ez a tiszta dátum (csak A oszlop)
-          opt.setAttribute('data-match', d.isMatchDay);
-          select.appendChild(opt);
-        });
-      }
+      globalData.dates.forEach(d => {
+        let opt = document.createElement('option');
+        opt.value = d.label;
+        opt.innerText = d.label;
+        opt.setAttribute('data-pure', d.pure);
+        opt.setAttribute('data-match', d.isMatchDay);
+        select.appendChild(opt);
+      });
       
-      if (currentVal) select.value = currentVal;
       updateView();
       statusDiv.innerText = "";
     } catch (e) { 
@@ -85,21 +80,18 @@
     const msgBox = document.getElementById('msgBox');
     const btn = document.getElementById('submitBtn');
     const listBody = document.getElementById('listBody');
-    const listHeader = document.getElementById('listHeader');
     
     msgBox.innerHTML = "";
     btn.disabled = false;
-    listBody.innerHTML = "";
 
-    if (!select.value || select.value === "") {
-      listHeader.innerText = "Válassz napot a lista megtekintéséhez";
+    if (!select.value) {
+      listBody.innerHTML = "<p style='color:#999; font-size:14px;'>Válassz napot a lista megtekintéséhez.</p>";
       return;
     }
 
     const pureDate = selectedOption.getAttribute('data-pure');
     const isMatch = selectedOption.getAttribute('data-match') === "true";
 
-    // 1. Meccsnap ellenőrzés
     if (isMatch) {
       msgBox.innerHTML = `<div class="warning" style="color:#d93025; background:#fce8e6; border-color:#fad2cf;">
         <b>Meccsnap miatt, csak szurkolókat várunk, edzésre most nem lesz lehetőséged jelentkezni! :)</b>
@@ -107,12 +99,11 @@
       btn.disabled = true;
     }
 
-    // 2. Szűrt lista megjelenítése (csak az adott tiszta dátumra)
+    // Csak az adott napra jelentkezőket mutatjuk
     const filtered = globalData.attendees.filter(a => a.idopont === pureDate);
-    listHeader.innerHTML = `Jelentkezők listája: <br><small style="color:blue">${pureDate}</small>`;
-
+    
     if (filtered.length === 0) {
-      listBody.innerHTML = "<p style='color:#999; font-size:14px; padding:10px;'>Erre a napra még nincs jelentkező.</p>";
+      listBody.innerHTML = "<p style='color:#999; font-size:14px;'>Még nincs jelentkező.</p>";
     } else {
       listBody.innerHTML = filtered.map(a => `
         <div class="attendee-item">
@@ -121,7 +112,6 @@
         </div>`).join('');
     }
 
-    // 3. Létszám számláló
     if (!isMatch) {
       const count = filtered.length;
       msgBox.innerHTML = `<div class="limit-info">Aktuális létszám: ${count} / 5 fő</div>`;
@@ -135,40 +125,34 @@
   }
 
   async function submitData() {
-    const nameInput = document.getElementById('name');
+    const n = document.getElementById('name').value.trim();
     const select = document.getElementById('dateSelect');
-    const n = nameInput.value.trim();
     const pureDate = select.options[select.selectedIndex].getAttribute('data-pure');
     
     if(!n || !pureDate) return alert("Név és időpont választása kötelező!");
     
     document.getElementById('submitBtn').disabled = true;
-    document.getElementById('status').innerText = "Mentés folyamatban...";
+    document.getElementById('status').innerText = "Mentés...";
     
     const url = `${SCRIPT_URL}?action=add&nev=${encodeURIComponent(n)}&idopont=${encodeURIComponent(pureDate)}`;
     
     try {
       await fetch(url, { method: 'POST' });
-      nameInput.value = "";
+      document.getElementById('name').value = "";
       await loadData();
     } catch(e) {
-      alert("Hiba történt a mentés során.");
+      alert("Hiba mentés közben.");
       document.getElementById('submitBtn').disabled = false;
     }
   }
 
   async function deleteEntry(n, d) {
-    if(!confirm("Biztosan törlöd a jelentkezést?")) return;
-    document.getElementById('status').innerText = "Törlés...";
-    
+    if(!confirm("Törlöd?")) return;
     const url = `${SCRIPT_URL}?action=delete&nev=${encodeURIComponent(n)}&idopont=${encodeURIComponent(d)}`;
-    
     try {
       await fetch(url, { method: 'POST' });
       await loadData();
-    } catch(e) {
-      alert("Hiba történt a törlés során.");
-    }
+    } catch(e) { alert("Hiba törléskor."); }
   }
 </script>
 </body>
