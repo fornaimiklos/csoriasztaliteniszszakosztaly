@@ -26,7 +26,13 @@
         }
         h2 {
             color: #333;
-            margin-bottom: 25px;
+            margin-bottom: 5px;
+        }
+        h4 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #777;
         }
         input, select {
             width: 100%;
@@ -87,12 +93,28 @@
         .attendee-list li:last-child {
             border-bottom: none;
         }
+
+        .delete-btn {
+            background-color: #dc3545;
+            padding: 6px 10px;
+            color: white;
+            border-radius: 6px;
+            float: right;
+            cursor: pointer;
+            font-size: 12px;
+            border: none;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>🏓 Edzés Jelentkezés</h2>
+    <h4>(Tagoknak nem kell regisztrálni!)</h4>
+
     <input type="text" id="nev" placeholder="Írd be a neved..." required>
     
     <select id="idopont" onchange="updateAttendeeList()">
@@ -109,115 +131,46 @@
 </div>
 
 <script>
-    // ÚJ Script URL
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzo2LQn_B7pyMLuAv8RkCm9Cz9hJFp-G9nrCbSeej_3pGz7hqskgDoJEs4HzPqCjik8/exec";
 
     let allAttendees = [];
 
     window.onload = function() {
-        const status = document.getElementById('status');
-
-        // Időpontok lekérése
-        fetch(SCRIPT_URL + "?action=getDates")
-            .then(res => {
-                if (!res.ok) throw new Error("HTTP hiba: " + res.status);
-                return res.json();
-            })
-            .then(data => {
-                const select = document.getElementById('idopont');
-                select.innerHTML = "<option disabled selected value=''>Válassz időpontot...</option>";
-
-                if (!Array.isArray(data) || data.length === 0) {
-                    status.innerText = "Nincs elérhető jövőbeli edzés.";
-                    status.style.color = "orange";
-                    return;
-                }
-
-                data.forEach(date => {
-                    let opt = document.createElement('option');
-                    opt.value = date;
-                    opt.innerHTML = date;
-                    select.appendChild(opt);
-                });
-            })
-            .catch(err => {
-                console.error(err);
-                status.innerText = "Hiba az időpontok betöltésekor.";
-                status.style.color = "red";
-            });
-
-        // Jelentkezők betöltése
+        loadDates();
         loadAttendees();
     };
 
+    function loadDates() {
+        const status = document.getElementById('status');
+        fetch(SCRIPT_URL + "?action=getDates")
+        .then(r => r.json())
+        .then(data => {
+            const s = document.getElementById('idopont');
+            s.innerHTML = "<option disabled selected value=''>Válassz időpontot...</option>";
+            data.forEach(d => {
+                let opt = document.createElement('option');
+                opt.value = d;
+                opt.innerHTML = d;
+                s.appendChild(opt);
+            });
+        });
+    }
+
     function loadAttendees() {
         fetch(SCRIPT_URL + "?action=getAttendees")
-            .then(res => {
-                if (!res.ok) throw new Error("HTTP hiba: " + res.status);
-                return res.json();
-            })
-            .then(data => {
-                allAttendees = data;
-                updateAttendeeList();
-            })
-            .catch(err => {
-                console.error("Jelentkezők betöltése sikertelen:", err);
-            });
+        .then(r => r.json())
+        .then(data => {
+            allAttendees = data;
+            updateAttendeeList();
+        });
     }
 
     function updateAttendeeList() {
-        const selectedDate = document.getElementById('idopont').value;
-        const listContainer = document.getElementById('list');
+        const date = document.getElementById('idopont').value;
         const box = document.getElementById('attendeeBox');
+        const list = document.getElementById('list');
 
-        if (!selectedDate) {
-            box.style.display = "none";
-            return;
-        }
-
-        const filtered = allAttendees.filter(a => a.idopont === selectedDate);
+        if (!date) { box.style.display = "none"; return; }
         box.style.display = "block";
 
-        if (filtered.length > 0) {
-            listContainer.innerHTML = filtered.map(a => `<li>✅ ${a.nev}</li>`).join('');
-        } else {
-            listContainer.innerHTML = "<li>Még nincs jelentkező erre a napra.</li>";
-        }
-    }
-
-    function submitForm() {
-        const nev = document.getElementById('nev').value.trim();
-        const idopont = document.getElementById('idopont').value;
-        const status = document.getElementById('status');
-
-        if (!nev || !idopont) {
-            status.innerText = "Töltsd ki mindkét mezőt!";
-            status.style.color = "red";
-            return;
-        }
-
-        status.innerText = "Küldés...";
-        status.style.color = "blue";
-
-        fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: "nev=" + encodeURIComponent(nev) +
-                  "&idopont=" + encodeURIComponent(idopont)
-        })
-        .then(() => {
-            status.innerText = "Sikeres jelentkezés! ✅";
-            status.style.color = "green";
-            document.getElementById('nev').value = "";
-            setTimeout(loadAttendees, 1500);
-        })
-        .catch(() => {
-            status.innerText = "Hiba történt.";
-            status.style.color = "red";
-        });
-    }
-</script>
-
-</body>
-</html>
+        const filtered = allAttendees.filter(a => a.idopont === da
