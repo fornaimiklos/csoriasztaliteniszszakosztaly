@@ -25,6 +25,7 @@
   <h2>🏓 Edzés Jelentkezés</h2>
   <span class="subtitle">(Tagoknak NEM kell jelentkezni)</span>
   <div id="status"></div>
+  
   <div id="formContainer">
     <input type="text" id="name" placeholder="Írd be a neved...">
     <select id="dateSelect" onchange="updateView()">
@@ -33,6 +34,7 @@
     <div id="msgBox"></div>
     <button id="submitBtn" onclick="submitData()">OTT LESZEK!</button>
   </div>
+
   <div style="text-align: left; margin-top: 25px;">
     <strong>Jelentkezők listája:</strong>
     <div id="listBody"></div>
@@ -51,22 +53,27 @@
     try {
       const resp = await fetch(SCRIPT_URL);
       globalData = await resp.json();
+      
       const select = document.getElementById('dateSelect');
       select.innerHTML = '<option value="" disabled selected>-- Válassz időpontot --</option>';
       
-      if(globalData.dates) {
+      if (globalData.dates && globalData.dates.length > 0) {
         globalData.dates.forEach(d => {
           let opt = document.createElement('option');
-          opt.value = d.label; 
+          opt.value = d.label;
           opt.innerText = d.label;
           opt.setAttribute('data-pure', d.pure);
           opt.setAttribute('data-match', d.isMatchDay);
           select.appendChild(opt);
         });
       }
+      
       updateView();
       statusDiv.innerText = "";
-    } catch (e) { statusDiv.innerText = "Hiba a kapcsolódáskor!"; }
+    } catch (e) { 
+      statusDiv.style.color = "red";
+      statusDiv.innerText = "Hiba a kapcsolódáskor!";
+    }
   }
 
   function updateView() {
@@ -75,6 +82,7 @@
     const msgBox = document.getElementById('msgBox');
     const btn = document.getElementById('submitBtn');
     const listBody = document.getElementById('listBody');
+    
     msgBox.innerHTML = "";
     btn.disabled = false;
 
@@ -93,7 +101,9 @@
       btn.disabled = true;
     }
 
+    // Csak az adott napra jelentkezőket mutatjuk
     const filtered = globalData.attendees.filter(a => a.idopont === pureDate);
+    
     if (filtered.length === 0) {
       listBody.innerHTML = "<p style='color:#999; font-size:14px;'>Erre a napra még nincs jelentkező.</p>";
     } else {
@@ -119,26 +129,35 @@
   async function submitData() {
     const n = document.getElementById('name').value.trim();
     const select = document.getElementById('dateSelect');
-    if(!select.value) return alert("Válassz időpontot!");
+    if (!select.value) return alert("Válassz időpontot!");
     const pureDate = select.options[select.selectedIndex].getAttribute('data-pure');
     
-    if(!n) return alert("Írd be a neved!");
+    if (!n) return alert("Írd be a neved!");
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('status').innerText = "Mentés...";
     
     const url = `${SCRIPT_URL}?action=add&nev=${encodeURIComponent(n)}&idopont=${encodeURIComponent(pureDate)}`;
+    
     try {
       await fetch(url, { method: 'POST' });
       document.getElementById('name').value = "";
       await loadData();
-    } catch(e) { alert("Hiba mentés közben."); document.getElementById('submitBtn').disabled = false; }
+    } catch (e) { 
+      alert("Hiba mentés közben."); 
+      document.getElementById('submitBtn').disabled = false; 
+    }
   }
 
   async function deleteEntry(nev, idopont) {
-    if(!confirm("Biztosan törlöd a jelentkezést?")) return;
+    if (!confirm("Biztosan törlöd a jelentkezést?")) return;
     document.getElementById('status').innerText = "Törlés...";
     const url = `${SCRIPT_URL}?action=delete&nev=${encodeURIComponent(nev)}&idopont=${encodeURIComponent(idopont)}`;
-    try { await fetch(url, { method: 'POST' }); await loadData(); } catch(e) { alert("Hiba törléskor."); }
+    try { 
+      await fetch(url, { method: 'POST' }); 
+      await loadData(); 
+    } catch (e) { 
+      alert("Hiba törléskor."); 
+    }
   }
 </script>
 </body>
