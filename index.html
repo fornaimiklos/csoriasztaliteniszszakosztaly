@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🏓 Edzés Jelentkezés</title>
+  <title>Edzés Jelentkezés</title>
   <style>
     :root { --p: #28a745; --d: #dc3545; --w: #ffc107; }
     body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
@@ -74,8 +74,8 @@
 
   function renderList() {
     const list = document.getElementById('listBody');
-    // Csak a nem undefined és nem üres jelentkezőket jelenítjük meg
-    const validAttendees = globalData.attendees.filter(a => a.nev && a.nev !== "undefined" && a.idopont !== "undefined");
+    // Csak az érvényes jelentkezőket jelenítjük meg
+    const validAttendees = globalData.attendees.filter(a => a.nev && a.nev !== "undefined" && a.idopont && a.idopont !== "undefined");
     
     if (validAttendees.length === 0) {
       list.innerHTML = "<p style='color:#999; font-size:14px;'>Még nincs jelentkező.</p>";
