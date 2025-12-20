@@ -96,7 +96,7 @@
     <input type="text" id="nev" placeholder="Írd be a neved..." required>
     
     <select id="idopont" onchange="updateAttendeeList()">
-        <option disabled selected value="">-- Időpontok betöltése... --</option>
+        <option disabled selected value="">-- Válassz időpontot... --</option>
     </select>
 
     <button onclick="submitForm()">OTT LESZEK!</button>
@@ -109,13 +109,15 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSbUEBg62y3gPCQdrrc1eIbpz6q4kuGse1-n3XX1ac2yAxN1tOeSiFt5Dpvh00E2c/exec";
+    // ÚJ Script URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzo2LQn_B7pyMLuAv8RkCm9Cz9hJFp-G9nrCbSeej_3pGz7hqskgDoJEs4HzPqCjik8/exec";
 
     let allAttendees = [];
 
     window.onload = function() {
         const status = document.getElementById('status');
 
+        // Időpontok lekérése
         fetch(SCRIPT_URL + "?action=getDates")
             .then(res => {
                 if (!res.ok) throw new Error("HTTP hiba: " + res.status);
@@ -139,10 +141,12 @@
                 });
             })
             .catch(err => {
+                console.error(err);
                 status.innerText = "Hiba az időpontok betöltésekor.";
                 status.style.color = "red";
             });
 
+        // Jelentkezők betöltése
         loadAttendees();
     };
 
@@ -156,7 +160,9 @@
                 allAttendees = data;
                 updateAttendeeList();
             })
-            .catch(console.error);
+            .catch(err => {
+                console.error("Jelentkezők betöltése sikertelen:", err);
+            });
     }
 
     function updateAttendeeList() {
