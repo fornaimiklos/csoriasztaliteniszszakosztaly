@@ -42,3 +42,317 @@
     h2 { font-size: 14px; margin: 0 0 20px; text-align: center; color: #555; }
 
     label {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    input, select, button {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid #d0d7de;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      background: #f9fafb;
+    }
+
+    input:focus, select:focus {
+      border-color: #ff4b73;
+      box-shadow: 0 0 0 2px rgba(255,75,115,0.2);
+      background: #ffffff;
+    }
+
+    select {
+      cursor: pointer;
+    }
+
+    button {
+      margin-top: 10px;
+      background: linear-gradient(135deg,#ff4b73,#ff7b3d);
+      border: none;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(255,75,115,0.4);
+    }
+
+    button:hover {
+      filter: brightness(1.05);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .message {
+      margin-top: 10px;
+      font-size: 13px;
+      min-height: 18px;
+    }
+
+    .message.ok { color: #1a7f37; }
+    .message.error { color: #d32f2f; }
+
+    .registrations-title {
+      margin-top: 20px;
+      font-size: 16px;
+      font-weight: 700;
+      text-align: left;
+      border-top: 1px solid #eee;
+      padding-top: 14px;
+    }
+
+    .session-block {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: #f9fafb;
+      border: 1px solid #e0e4ea;
+    }
+
+    .session-date {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .session-note {
+      font-size: 12px;
+      color: #ff4b73;
+      margin-bottom: 4px;
+    }
+
+    .session-names {
+      font-size: 13px;
+      margin: 0;
+    }
+
+    .session-names span {
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    .no-registrations {
+      font-size: 13px;
+      color: #777;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><span class="icon">🏓</span>Edzés Jelentkezés</h1>
+    <h2>(Tagoknak NEM kell regisztrálni)</h2>
+
+    <div class="field">
+      <label for="name">Írd be a neved…</label>
+      <input id="name" type="text" placeholder="Csóri Pingpongos" />
+    </div>
+
+    <div class="field">
+      <label for="date">Válassz időpontot</label>
+      <select id="date">
+        <option value="">-- Válassz időpontot --</option>
+      </select>
+    </div>
+
+    <button id="submitBtn">Jelentkezem</button>
+
+    <p id="infoMessage" class="message"></p>
+
+    <div class="registrations-title">Jelentkezők edzésnaponként</div>
+    <div id="registrationsContainer"></div>
+  </div>
+
+  <script>
+    // IDE tedd be a saját Apps Script webapp URL-t:
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzo2LQn_B7pyMLuAv8RkCm9Cz9hJFp-G9nrCbSeej_3pGz7hqskgDoJEs4HzPqCjik8/exec";
+
+    const nameInput = document.getElementById("name");
+    const dateSelect = document.getElementById("date");
+    const submitBtn = document.getElementById("submitBtn");
+    const infoMessage = document.getElementById("infoMessage");
+    const registrationsContainer = document.getElementById("registrationsContainer");
+
+    // itt tároljuk az összes edzésnapot A+B oszlopból
+    let allSessions = []; // {dateText, note, isMatchDay}
+
+    async function loadData() {
+      infoMessage.textContent = "Adatok betöltése…";
+      infoMessage.className = "message";
+
+      try {
+        const res = await fetch(SCRIPT_URL + "?action=getData");
+        const data = await res.json();
+
+        // data.dates = [ [A1, B1], [A2, B2], ... ]
+        allSessions = (data.dates || [])
+          .filter(row => row[0]) // csak ahol van dátum
+          .map(row => {
+            const dateText = row[0];
+            const note = row[1] || "";
+            const isMatchDay = note.trim().toLowerCase() === "meccsnap!";
+            return { dateText, note, isMatchDay };
+          });
+
+        populateDateSelect();
+        renderRegistrations(data.registrations || []);
+
+        infoMessage.textContent = "";
+      } catch (err) {
+        console.error(err);
+        infoMessage.textContent = "Hiba az adatok betöltésekor.";
+        infoMessage.className = "message error";
+      }
+    }
+
+    function populateDateSelect() {
+      dateSelect.innerHTML = '<option value="">-- Válassz időpontot --</option>';
+
+      // csak az első 5 edzésnap
+      const firstFive = allSessions.slice(0, 5);
+
+      firstFive.forEach(session => {
+        const option = document.createElement("option");
+        option.value = session.dateText;
+
+        let label = session.dateText;
+        if (session.note && session.note.trim().length > 0) {
+          label += " – " + session.note;
+        }
+
+        if (session.isMatchDay) {
+          option.dataset.meccsnap = "true";
+        }
+
+        option.textContent = label;
+        dateSelect.appendChild(option);
+      });
+    }
+
+    function renderRegistrations(registrations) {
+      registrationsContainer.innerHTML = "";
+
+      if (!registrations || registrations.length === 0) {
+        const p = document.createElement("p");
+        p.className = "no-registrations";
+        p.textContent = "Még nincs jelentkező.";
+        registrationsContainer.appendChild(p);
+        return;
+      }
+
+      // registrations: [ [name, dateText], ... ]
+      const byDate = {};
+
+      registrations.forEach(row => {
+        const name = row[0];
+        const dateText = row[1];
+        if (!byDate[dateText]) byDate[dateText] = [];
+        byDate[dateText].push(name);
+      });
+
+      Object.keys(byDate).forEach(dateText => {
+        const sessionDiv = document.createElement("div");
+        sessionDiv.className = "session-block";
+
+        const sessionTitle = document.createElement("div");
+        sessionTitle.className = "session-date";
+        sessionTitle.textContent = dateText;
+        sessionDiv.appendChild(sessionTitle);
+
+        const sessionRow = allSessions.find(s => s.dateText === dateText);
+        if (sessionRow && sessionRow.note) {
+          const noteDiv = document.createElement("div");
+          noteDiv.className = "session-note";
+          noteDiv.textContent = sessionRow.note;
+          sessionDiv.appendChild(noteDiv);
+        }
+
+        const namesP = document.createElement("p");
+        namesP.className = "session-names";
+        byDate[dateText].forEach(name => {
+          const span = document.createElement("span");
+          span.textContent = name;
+          namesP.appendChild(span);
+        });
+
+        sessionDiv.appendChild(namesP);
+        registrationsContainer.appendChild(sessionDiv);
+      });
+    }
+
+    async function handleSubmit() {
+      infoMessage.textContent = "";
+      infoMessage.className = "message";
+
+      const name = nameInput.value.trim();
+      const dateText = dateSelect.value;
+
+      if (!name) {
+        infoMessage.textContent = "Írd be a neved!";
+        infoMessage.className = "message error";
+        return;
+      }
+
+      if (!dateText) {
+        infoMessage.textContent = "Válassz egy edzésnapot!";
+        infoMessage.className = "message error";
+        return;
+      }
+
+      const selectedSession = allSessions.find(s => s.dateText === dateText);
+
+      // ⚽ Meccsnap logika
+      if (selectedSession && selectedSession.isMatchDay) {
+        infoMessage.textContent = "Meccsnap miatt, edzés nem, de a szurkolás lehetséges! :)";
+        infoMessage.className = "message error";
+        return;
+      }
+
+      submitBtn.disabled = true;
+
+      try {
+        const params = new URLSearchParams({
+          action: "register",
+          name,
+          date: dateText
+        });
+
+        const res = await fetch(SCRIPT_URL + "?" + params.toString());
+        const data = await res.json();
+
+        if (data.success) {
+          infoMessage.textContent = "Sikeres jelentkezés! 🙂";
+          infoMessage.className = "message ok";
+          nameInput.value = "";
+
+          renderRegistrations(data.registrations || []);
+        } else {
+          infoMessage.textContent = data.message || "Nem sikerült a jelentkezés.";
+          infoMessage.className = "message error";
+        }
+      } catch (err) {
+        console.error(err);
+        infoMessage.textContent = "Hiba történt a jelentkezés közben.";
+        infoMessage.className = "message error";
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    submitBtn.addEventListener("click", handleSubmit);
+
+    // induláskor
+    loadData();
+  </script>
+</body>
+</html>
