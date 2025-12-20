@@ -12,7 +12,7 @@
     input, select, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
     button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
     button:active { transform: scale(0.98); }
-    .attendee-item { background: #fff; border: 1px solid #eee; padding: 12px; margin: 10px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .attendee-item { background: #fff; border: 1px solid #eee; padding: 12px; margin: 10px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; text-align: left; }
     .del-btn { background: var(--d); width: auto; padding: 8px 12px; font-size: 12px; margin: 0; border-radius: 6px; }
     #status { color: var(--p); font-size: 13px; height: 18px; margin-bottom: 10px; }
   </style>
@@ -32,7 +32,6 @@
 </div>
 
 <script>
-  // A te saját Webalkalmazás URL-ed (Ezt az Összeállításnál kapod meg)
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwdp0zen-DoUxJoF7a6-f-Nw8c63FGT2dGL9q6KdKFA0kDEXPDY9eph6dhhXG7qOtC_/exec";
 
   window.onload = loadData;
@@ -43,6 +42,8 @@
       const resp = await fetch(SCRIPT_URL);
       const data = await resp.json();
       
+      if(data.error) throw new Error(data.error);
+
       const select = document.getElementById('dateSelect');
       select.innerHTML = '<option value="" disabled selected>-- Válassz időpontot --</option>' + 
                          data.dates.map(d => `<option value="${d}">${d}</option>`).join('');
@@ -54,7 +55,11 @@
           <button class="del-btn" onclick="deleteEntry('${a.nev}','${a.idopont}')">Törlés</button>
         </div>`).join('') || "<p style='color:#999;'>Még nincs jelentkező.</p>";
       document.getElementById('status').innerText = "";
-    } catch (e) { document.getElementById('status').innerText = "Hiba a kapcsolódáskor!"; }
+    } catch (e) { 
+      document.getElementById('status').style.color = "red";
+      document.getElementById('status').innerText = "Hiba a kapcsolódáskor!";
+      console.error(e);
+    }
   }
 
   async function submitData() {
@@ -69,14 +74,14 @@
     
     document.getElementById('name').value = "";
     document.getElementById('submitBtn').disabled = false;
-    setTimeout(loadData, 1500);
+    setTimeout(loadData, 2000);
   }
 
   async function deleteEntry(n, d) {
     if(!confirm("Biztosan törlöd a jelentkezést?")) return;
     document.getElementById('status').innerText = "Törlés...";
     await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"delete", nev:n, idopont:d}) });
-    setTimeout(loadData, 1500);
+    setTimeout(loadData, 2000);
   }
 </script>
 </body>
