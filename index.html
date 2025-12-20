@@ -174,8 +174,8 @@
   </div>
 
   <script>
-    
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwel2KkdCsinGZZjk2Db4xdK6S23OJB1fNwmgTJPj4LtB41eAoD8TfpFTTCUmpZK9Ko/exec";
+    // A TE webapp URL-ed:
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjVDYFpH6PHvFpCNeFONm7HZ6JVF00JfHLeUhaeKD03aNcp2biESNjLn0yPLfD4bv4/exec";
 
     const nameInput = document.getElementById("name");
     const dateSelect = document.getElementById("date");
@@ -183,8 +183,8 @@
     const infoMessage = document.getElementById("infoMessage");
     const registrationsContainer = document.getElementById("registrationsContainer");
 
-    // itt tároljuk az összes edzésnapot A+B oszlopból
-    let allSessions = []; // {dateText, note, isMatchDay}
+    let allSessions = [];          // {dateText, note, isMatchDay}
+    let currentRegistrations = []; // [ [Name, Date], ... ]
 
     async function loadData() {
       infoMessage.textContent = "Adatok betöltése…";
@@ -194,13 +194,13 @@
         const res = await fetch(SCRIPT_URL + "?action=getData");
         const data = await res.json();
 
-        // data.dates = [ [A1, B1], [A2, B2], ... ]
         allSessions = (data.dates || [])
-          .filter(row => row[0]) // csak ahol van dátum
+          .filter(row => row[0])
           .map(row => {
             const dateText = row[0];
             const note = row[1] || "";
-            const isMatchDay = note.trim().toLowerCase() === "meccsnap!";
+            // BÁRHOL benne van a "meccsnap" szó → meccsnapos nap
+            const isMatchDay = note.toLowerCase().includes("meccsnap");
             return { dateText, note, isMatchDay };
           });
 
@@ -209,7 +209,7 @@
 
         infoMessage.textContent = "";
       } catch (err) {
-        console.error(err);
+        console.error("Hiba getData közben:", err);
         infoMessage.textContent = "Hiba az adatok betöltésekor.";
         infoMessage.className = "message error";
       }
@@ -218,7 +218,7 @@
     function populateDateSelect() {
       dateSelect.innerHTML = '<option value="">-- Válassz időpontot --</option>';
 
-      // csak az első 5 edzésnap
+      // csak az első 5 edzésnap jelenjen meg
       const firstFive = allSessions.slice(0, 5);
 
       firstFive.forEach(session => {
@@ -240,6 +240,8 @@
     }
 
     function renderRegistrations(registrations) {
+      // itt frissítjük a globális állapotot, hogy handleSubmit tudjon számolni
+      currentRegistrations = registrations || [];
       registrationsContainer.innerHTML = "";
 
       if (!registrations || registrations.length === 0) {
@@ -250,7 +252,6 @@
         return;
       }
 
-      // registrations: [ [name, dateText], ... ]
       const byDate = {};
 
       registrations.forEach(row => {
@@ -277,15 +278,18 @@
           sessionDiv.appendChild(noteDiv);
         }
 
-        const namesP = document.createElement("p");
-        namesP.className = "session-names";
+        // MINDEN NÉV KÜLÖN SORBAN (lista)
+        const list = document.createElement("ul");
+        list.style.paddingLeft = "18px";
+        list.style.margin = "0";
+
         byDate[dateText].forEach(name => {
-          const span = document.createElement("span");
-          span.textContent = name;
-          namesP.appendChild(span);
+          const li = document.createElement("li");
+          li.textContent = name;
+          list.appendChild(li);
         });
 
-        sessionDiv.appendChild(namesP);
+        sessionDiv.appendChild(list);
         registrationsContainer.appendChild(sessionDiv);
       });
     }
@@ -311,9 +315,19 @@
 
       const selectedSession = allSessions.find(s => s.dateText === dateText);
 
-      // ⚽ Meccsnap logika
+      // 🔒 Meccsnap: tiltás
       if (selectedSession && selectedSession.isMatchDay) {
-        infoMessage.textContent = "Meccsnap miatt, edzés nem, de a szurkolás lehetséges! :)";
+        infoMessage.textContent =
+          "Várunk szeretettel szurkolóként, de meccsnap miatt nincs lehetőség edzésre jelentkezni ezen a napon. 🙂";
+        infoMessage.className = "message error";
+        return;
+      }
+
+      // 🔒 Max 5 fő / edzésnap
+      const countForDate = currentRegistrations.filter(r => r[1] === dateText).length;
+      if (countForDate >= 5) {
+        infoMessage.textContent =
+          "Erre az edzésnapra betelt a létszám (max. 5 fő). Kérlek válassz másik időpontot, vagy egyeztess az edzővel.";
         infoMessage.className = "message error";
         return;
       }
@@ -341,7 +355,7 @@
           infoMessage.className = "message error";
         }
       } catch (err) {
-        console.error(err);
+        console.error("Hiba register közben:", err);
         infoMessage.textContent = "Hiba történt a jelentkezés közben.";
         infoMessage.className = "message error";
       } finally {
