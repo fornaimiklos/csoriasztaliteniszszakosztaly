@@ -130,22 +130,18 @@
 </div>
 
 <script>
-    // Ha új Web App deploy-t csinálsz, itt frissítsd ezt az URL-t!
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzo2LQn_B7pyMLuAv8RkCm9Cz9hJFp-G9nrCbSeej_3pGz7hqskgDoJEs4HzPqCjik8/exec";
 
     let allAttendees = [];
     let clientIp = "";
 
-    // IP lekérés (ipify)
     function fetchIp() {
         fetch("https://api.ipify.org?format=json")
             .then(r => r.json())
             .then(data => {
                 clientIp = data.ip || "";
-                console.log("IP:", clientIp);
             })
-            .catch(err => {
-                console.error("IP lekérés hiba:", err);
+            .catch(() => {
                 clientIp = "";
             });
     }
@@ -243,7 +239,6 @@
             return;
         }
 
-        // 5 fős limit
         const count = allAttendees.filter(a => a.idopont === date).length;
         if (count >= 5) {
             status.innerText = "Erre az edzésre betelt az 5 fős limit!";
@@ -251,7 +246,6 @@
             return;
         }
 
-        // 1 regisztráció / IP / nap
         const ipExists = allAttendees.some(a => a.idopont === date && a.ip === clientIp);
         if (ipExists) {
             status.innerText = "Erről az IP-címről már van regisztráció erre az edzésre.";
