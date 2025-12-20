@@ -5,16 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🏓 Edzés Jelentkezés</title>
   <style>
-    :root { --p: #28a745; --d: #dc3545; }
+    :root { --p: #28a745; --d: #dc3545; --w: #ffc107; }
     body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
     .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
     .subtitle { color: #666; font-size: 0.85em; margin-bottom: 20px; display: block; }
     input, select, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
     button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
     button:active { transform: scale(0.98); }
+    button:disabled { background: #ccc; cursor: not-allowed; }
     .attendee-item { background: #fff; border: 1px solid #eee; padding: 12px; margin: 10px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; text-align: left; }
-    .del-btn { background: var(--d); width: auto; padding: 8px 12px; font-size: 12px; margin: 0; border-radius: 6px; }
-    #status { color: var(--p); font-size: 13px; height: 18px; margin-bottom: 10px; font-weight: bold; }
+    .del-btn { background: var(--d); width: auto; padding: 8px 12px; font-size: 11px; margin: 0; border-radius: 6px; }
+    #status { color: var(--p); font-size: 13px; min-height: 18px; margin-bottom: 10px; font-weight: bold; }
+    .warning { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; font-size: 13px; margin: 10px 0; border: 1px solid #ffeeba; }
+    .limit-info { font-size: 12px; color: #555; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -22,43 +25,82 @@
   <h2>🏓 Edzés Jelentkezés</h2>
   <span class="subtitle">(Tagoknak NEM kell jelentkezni)</span>
   <div id="status"></div>
-  <input type="text" id="name" placeholder="Neved...">
-  <select id="dateSelect"><option>Időpontok betöltése...</option></select>
-  <button id="submitBtn" onclick="submitData()">OTT LESZEK!</button>
+  
+  <div id="formContainer">
+    <input type="text" id="name" placeholder="Írd be a neved...">
+    <select id="dateSelect" onchange="checkSelection()"><option>Betöltés...</option></select>
+    <div id="msgBox"></div>
+    <button id="submitBtn" onclick="submitData()">OTT LESZEK!</button>
+  </div>
+
   <div style="text-align: left; margin-top: 25px;">
-    <strong>Jelentkezők:</strong>
+    <strong>Jelentkezők listája:</strong>
     <div id="listBody"></div>
   </div>
 </div>
 
 <script>
-  // A te Webalkalmazás URL-ed
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxwo_O9ffH_YUSD_kcCh6WCy6lhD5NUFvuZ8pY4tm_u1-XJtBX5Q4a5BfTv0IjbNt1d/exec";
+  let globalData = { dates: [], attendees: [] };
 
   window.onload = loadData;
 
   async function loadData() {
-    const statusDiv = document.getElementById('status');
-    statusDiv.style.color = "var(--p)";
-    statusDiv.innerText = "Adatok frissítése...";
+    document.getElementById('status').innerText = "Adatok frissítése...";
     try {
       const resp = await fetch(SCRIPT_URL);
-      const data = await resp.json();
+      globalData = await resp.json();
       
       const select = document.getElementById('dateSelect');
       select.innerHTML = '<option value="" disabled selected>-- Válassz időpontot --</option>' + 
-                         data.dates.map(d => `<option value="${d}">${d}</option>`).join('');
+                         globalData.dates.map(d => `<option value="${d.full}" data-match="${d.isMatchDay}">${d.full}</option>`).join('');
       
-      const list = document.getElementById('listBody');
-      list.innerHTML = data.attendees.map(a => `
-        <div class="attendee-item">
-          <div><b>${a.nev}</b><br><small style="color:#666">${a.idopont}</small></div>
-          <button class="del-btn" onclick="deleteEntry('${a.nev}','${a.idopont}')">Törlés</button>
-        </div>`).join('') || "<p style='color:#999; font-size:14px;'>Még nincs jelentkező.</p>";
-      statusDiv.innerText = "";
+      renderList();
+      document.getElementById('status').innerText = "";
     } catch (e) { 
-      statusDiv.style.color = "red";
-      statusDiv.innerText = "Hiba a kapcsolódáskor!";
+      document.getElementById('status').innerText = "Hiba a kapcsolódáskor!";
+    }
+  }
+
+  function renderList() {
+    const list = document.getElementById('listBody');
+    if (!globalData.attendees.length) {
+      list.innerHTML = "<p style='color:#999;'>Még nincs jelentkező.</p>";
+      return;
+    }
+    
+    list.innerHTML = globalData.attendees.map(a => `
+      <div class="attendee-item">
+        <div><b>${a.nev}</b><br><small style="color:#666">${a.idopont}</small></div>
+        <button class="del-btn" onclick="deleteEntry('${a.nev}','${a.idopont}')">Törlés</button>
+      </div>`).join('');
+    checkSelection(); 
+  }
+
+  function checkSelection() {
+    const select = document.getElementById('dateSelect');
+    const selectedOption = select.options[select.selectedIndex];
+    const msgBox = document.getElementById('msgBox');
+    const btn = document.getElementById('submitBtn');
+    
+    msgBox.innerHTML = "";
+    btn.disabled = false;
+
+    if (!select.value) return;
+
+    // Meccsnap ellenőrzés
+    if (selectedOption.getAttribute('data-match') === "true") {
+      msgBox.innerHTML = `<div class="warning" style="color:red; border-color:red;">Mérkőzés miatt, sajnos nincs lehetőség jelentkezni erre a napra!</div>`;
+      btn.disabled = true;
+      return;
+    }
+
+    // Létszám ellenőrzés
+    const count = globalData.attendees.filter(a => a.idopont === select.value).length;
+    msgBox.innerHTML = `<div class="limit-info">Aktuális létszám: ${count} / 5 fő</div>`;
+
+    if (count >= 5) {
+      msgBox.innerHTML += `<div class="warning">Túljelentkezés! Kérlek vedd figyelembe, hogy előfordulhat, ha a túljelentkezés ellenére eljössz, hogy lesz olyan amikor csak ülsz és várod hogy felszabaduljon a játéklehetőség!</div>`;
     }
   }
 
@@ -66,16 +108,18 @@
     const n = document.getElementById('name').value.trim();
     const d = document.getElementById('dateSelect').value;
     if(!n || !d) return alert("Név és időpont választása kötelező!");
+    
     document.getElementById('submitBtn').disabled = true;
-    document.getElementById('status').innerText = "Mentés...";
+    document.getElementById('status').innerText = "Mentés folyamatban...";
+    
     await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"add", nev:n, idopont:d}) });
+    
     document.getElementById('name').value = "";
-    document.getElementById('submitBtn').disabled = false;
     setTimeout(loadData, 2000);
   }
 
   async function deleteEntry(n, d) {
-    if(!confirm("Biztosan törlöd a jelentkezést?")) return;
+    if(!confirm("Biztosan törlöd?")) return;
     document.getElementById('status').innerText = "Törlés...";
     await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"delete", nev:n, idopont:d}) });
     setTimeout(loadData, 2000);
