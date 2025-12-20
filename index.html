@@ -5,106 +5,67 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Edzés Jelentkezés</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
-    .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-    h2 { margin-bottom: 5px; color: #333; }
+    body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+    .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
     .subtitle { color: #666; font-size: 0.9em; margin-bottom: 20px; display: block; }
     input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
-    button { background-color: #28a745; color: white; font-weight: bold; border: none; cursor: pointer; transition: 0.3s; }
-    button:hover { background-color: #218838; }
-    button:disabled { background-color: #ccc; }
+    button { background: #28a745; color: white; font-weight: bold; border: none; cursor: pointer; }
     .attendee-item { background: #f8f9fa; padding: 12px; margin: 8px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #28a745; text-align: left; }
-    .delete-btn { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; width: auto; margin: 0; font-size: 12px; }
-    #status { font-size: 13px; color: #28a745; margin-bottom: 10px; height: 20px; }
+    .del-btn { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; width: auto; font-size: 12px; }
+    #status { font-size: 13px; color: #28a745; height: 20px; }
   </style>
 </head>
 <body>
 
-<div class="container">
+<div class="card">
   <h2>🏓 Edzés Jelentkezés</h2>
   <span class="subtitle">(Tagoknak NEM kell jelentkezni)</span>
-  
   <div id="status"></div>
-  
   <input type="text" id="name" placeholder="Írd be a neved...">
   <select id="dateSelect"><option>Időpontok betöltése...</option></select>
   <button id="submitBtn" onclick="submitData()">OTT LESZEK!</button>
-
   <div style="text-align: left; margin-top: 25px;">
-    <strong>Jelentkezők:</strong>
-    <div id="listContainer"></div>
+    <strong>Eddigi jelentkezők:</strong>
+    <div id="listBody"></div>
   </div>
 </div>
 
 <script>
   // IDE MÁSOLD BE A GOOGLE SCRIPTED LINKJÉT!
-  const SCRIPT_URL = "IDE_MÁSOLD_BE_A_SAJÁT_LINKEDET";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwdp0zen-DoUxJoF7a6-f-Nw8c63FGT2dGL9q6KdKFA0kDEXPDY9eph6dhhXG7qOtC_/exec";
 
   window.onload = loadData;
 
   async function loadData() {
     document.getElementById('status').innerText = "Adatok frissítése...";
     try {
-      const response = await fetch(SCRIPT_URL);
-      const data = await response.json();
-      
-      // Időpontok feltöltése
-      const select = document.getElementById('dateSelect');
-      select.innerHTML = data.dates.map(d => `<option value="${d}">${d}</option>`).join('') || "<option>Nincs időpont</option>";
-      
-      // Jelentkezők listája
-      const container = document.getElementById('listContainer');
-      container.innerHTML = data.attendees.map(a => `
+      const resp = await fetch(SCRIPT_URL);
+      const data = await resp.json();
+      document.getElementById('dateSelect').innerHTML = data.dates.map(d => `<option value="${d}">${d}</option>`).join('');
+      document.getElementById('listBody').innerHTML = data.attendees.map(a => `
         <div class="attendee-item">
           <span><b>${a.nev}</b><br><small>${a.idopont}</small></span>
-          <button class="delete-btn" onclick="deleteMe('${a.nev}', '${a.idopont}')">Törlés</button>
-        </div>`).join('') || "<p style='color:#999;'>Még nincs jelentkező.</p>";
-      
+          <button class="del-btn" onclick="deleteEntry('${a.nev}','${a.idopont}')">Törlés</button>
+        </div>`).join('') || "Nincs jelentkező.";
       document.getElementById('status').innerText = "";
-    } catch (e) {
-      document.getElementById('status').innerText = "Hiba történt a betöltéskor!";
-      console.error(e);
-    }
+    } catch (e) { document.getElementById('status').innerText = "Hiba!"; }
   }
 
   async function submitData() {
-    const name = document.getElementById('name').value.trim();
-    const date = document.getElementById('dateSelect').value;
-    if(!name) return alert("Kérlek, írd be a neved!");
-
-    document.getElementById('submitBtn').disabled = true;
-    document.getElementById('status').innerText = "Mentés...";
-
-    try {
-      await fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors', // A Google Script biztonsági szabályai miatt kell
-        body: JSON.stringify({action: "add", nev: name, idopont: date})
-      });
-      
-      document.getElementById('name').value = "";
-      setTimeout(loadData, 1500); // Várni kell kicsit, amíg a Google frissít
-    } catch (e) {
-      alert("Hiba a mentés során!");
-    } finally {
-      document.getElementById('submitBtn').disabled = false;
-    }
+    const n = document.getElementById('name').value;
+    const d = document.getElementById('dateSelect').value;
+    if(!n) return alert("Név!");
+    document.getElementById('status').innerText = "Küldés...";
+    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"add", nev:n, idopont:d}) });
+    document.getElementById('name').value = "";
+    setTimeout(loadData, 2000);
   }
 
-  async function deleteMe(name, date) {
-    if(!confirm("Biztosan törlöd a jelentkezést?")) return;
+  async function deleteEntry(n, d) {
+    if(!confirm("Törlöd?")) return;
     document.getElementById('status').innerText = "Törlés...";
-
-    try {
-      await fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify({action: "delete", nev: name, idopont: date})
-      });
-      setTimeout(loadData, 1500);
-    } catch (e) {
-      alert("Hiba a törlés során!");
-    }
+    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"delete", nev:n, idopont:d}) });
+    setTimeout(loadData, 2000);
   }
 </script>
 </body>
