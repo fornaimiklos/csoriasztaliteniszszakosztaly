@@ -10,11 +10,10 @@
         input, select { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 15px; background-color: #28a745; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
-        #status { margin-top: 15px; font-weight: bold; }
         .attendee-list { margin-top: 20px; text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; display: none; }
-        .attendee-list li { padding: 8px 0; border-bottom: 1px solid #f1f1f1; display: flex; justify-content: space-between; align-items: center; }
-        .delete-btn { background-color: #dc3545; padding: 5px 10px; color: white; border-radius: 5px; cursor: pointer; border: none; font-size: 12px; }
-        .limit-msg { color: #d9534f; font-weight: bold; margin-bottom: 10px; font-size: 14px; }
+        .attendee-list li { padding: 10px 0; border-bottom: 1px solid #f1f1f1; display: flex; justify-content: space-between; align-items: center; }
+        .delete-btn { background-color: #dc3545; padding: 6px 12px; color: white; border-radius: 6px; cursor: pointer; border: none; font-size: 13px; }
+        .limit-info { color: #d9534f; font-weight: bold; margin: 10px 0; font-size: 15px; }
     </style>
 </head>
 <body>
@@ -24,7 +23,7 @@
     <select id="idopont" onchange="updateAttendeeList()">
         <option disabled selected value="">-- Időpont betöltése... --</option>
     </select>
-    <div id="limitMsg" class="limit-msg"></div>
+    <div id="limitMsg" class="limit-info"></div>
     <button id="submitBtn" onclick="submitForm()">OTT LESZEK!</button>
     <p id="status"></p>
     <div id="attendeeBox" class="attendee-list">
@@ -35,7 +34,7 @@
 
 <script>
     // IDE MÁSOLD BE AZ ÚJ GOOGLE SCRIPT URL-EDET!
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzo2LQn_B7pyMLuAv8RkCm9Cz9hJFp-G9nrCbSeej_3pGz7hqskgDoJEs4HzPqCjik8/exec";
+    const SCRIPT_URL = "IDE_MÁSOLD_AZ_ÚJ_URL-T";
     let allAttendees = [];
     let clientIp = "";
 
@@ -62,34 +61,48 @@
         const date = document.getElementById('idopont').value;
         const filtered = allAttendees.filter(a => a.idopont === date);
         const count = filtered.length;
+        
         document.getElementById('limitMsg').innerText = `Létszám: ${count} / 5 fő`;
         document.getElementById('submitBtn').disabled = count >= 5;
         document.getElementById('attendeeBox').style.display = date ? "block" : "none";
+        
         document.getElementById('list').innerHTML = filtered.map(a => 
-            `<li>✅ ${a.nev} <button class="delete-btn" onclick="deleteSelf('${a.nev}','${a.idopont}')">Törlés</button></li>`
+            `<li><span>✅ ${a.nev}</span> <button class="delete-btn" onclick="deleteSelf('${a.nev}','${a.idopont}')">Törlés</button></li>`
         ).join("");
     }
 
     function submitForm() {
         const nev = document.getElementById('nev').value.trim();
         const date = document.getElementById('idopont').value;
-        if (!nev || !date) return;
+        if (!nev || !date) { alert("Név és időpont kötelező!"); return; }
+
         document.getElementById('status').innerText = "Küldés...";
         fetch(SCRIPT_URL, {
             method: "POST", mode: "no-cors",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: `action=add&nev=${encodeURIComponent(nev)}&idopont=${encodeURIComponent(date)}&ip=${encodeURIComponent(clientIp)}`
-        }).then(() => { setTimeout(() => location.reload(), 1000); });
+        }).then(() => { 
+            document.getElementById('status').innerText = "Sikeres!";
+            setTimeout(() => location.reload(), 1000); 
+        });
     }
 
     function deleteSelf(nev, idopont) {
-        if (document.getElementById('nev').value.trim() !== nev) { alert("Írd be a neved a törléshez!"); return; }
-        if (!confirm("Biztos törlöd?")) return;
+        const beirtNev = document.getElementById('nev').value.trim();
+        if (beirtNev !== nev) { 
+            alert("A törléshez írd be pontosan a nevedet felülre!"); 
+            return; 
+        }
+        if (!confirm("Biztosan törlöd a jelentkezésed?")) return;
+
         fetch(SCRIPT_URL, {
             method: "POST", mode: "no-cors",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: `action=delete&nev=${encodeURIComponent(nev)}&idopont=${encodeURIComponent(idopont)}`
-        }).then(() => { setTimeout(() => location.reload(), 500); });
+        }).then(() => { 
+            alert("Törölve a táblázatból!");
+            location.reload(); 
+        });
     }
 </script>
 </body>
