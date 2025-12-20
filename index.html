@@ -222,11 +222,39 @@
     }
 
     function deleteSelf(nev,idopont) {
-        const me = document.getElementById('nev').value.trim();
-        if (me !== nev) {
-            alert("Csak a SAJÁT regisztrációdat törölheted.");
-            return;
-        }
+        function deleteSelf(nev, idopont) {
+    const me = (document.getElementById('nev').value || "").trim();
+
+    if (!me) {
+        alert("Írd be a saját neved a törléshez!");
+        return;
+    }
+
+    if (me !== nev) {
+        alert("Csak a SAJÁT jelentkezésed törölheted.");
+        return;
+    }
+
+    // innentől a szerver név + időpont alapján töröl
+    fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body:
+            "action=delete" +
+            "&nev=" + encodeURIComponent(nev) +
+            "&idopont=" + encodeURIComponent(idopont)
+        // ip-t küldhetünk, de a szerver már nem figyeli
+    })
+    .then(() => {
+        alert("Törölve!");
+        loadAttendees();
+    })
+    .catch(() => {
+        alert("Hiba történt törlés közben.");
+    });
+}
+
 
         fetch(SCRIPT_URL,{
             method:"POST",
