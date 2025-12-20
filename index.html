@@ -52,27 +52,21 @@
       const resp = await fetch(SCRIPT_URL);
       globalData = await resp.json();
       const select = document.getElementById('dateSelect');
-      const currentVal = select.value;
-      
       select.innerHTML = '<option value="" disabled selected>-- Válassz időpontot --</option>';
       
       if(globalData.dates) {
         globalData.dates.forEach(d => {
           let opt = document.createElement('option');
-          opt.value = d.label;
+          opt.value = d.label; 
           opt.innerText = d.label;
           opt.setAttribute('data-pure', d.pure);
           opt.setAttribute('data-match', d.isMatchDay);
           select.appendChild(opt);
         });
       }
-      if (currentVal) select.value = currentVal;
       updateView();
       statusDiv.innerText = "";
-    } catch (e) { 
-      statusDiv.style.color = "red";
-      statusDiv.innerText = "Hiba a kapcsolódáskor!";
-    }
+    } catch (e) { statusDiv.innerText = "Hiba a kapcsolódáskor!"; }
   }
 
   function updateView() {
@@ -84,7 +78,7 @@
     msgBox.innerHTML = "";
     btn.disabled = false;
 
-    if (!select.value) {
+    if (!select.value || select.value === "") {
       listBody.innerHTML = "<p style='color:#999; font-size:14px;'>Válassz napot a lista megtekintéséhez.</p>";
       return;
     }
@@ -101,7 +95,7 @@
 
     const filtered = globalData.attendees.filter(a => a.idopont === pureDate);
     if (filtered.length === 0) {
-      listBody.innerHTML = "<p style='color:#999; font-size:14px;'>Még nincs jelentkező.</p>";
+      listBody.innerHTML = "<p style='color:#999; font-size:14px;'>Erre a napra még nincs jelentkező.</p>";
     } else {
       listBody.innerHTML = filtered.map(a => `
         <div class="attendee-item">
@@ -137,12 +131,13 @@
       await fetch(url, { method: 'POST' });
       document.getElementById('name').value = "";
       await loadData();
-    } catch(e) { alert("Hiba mentés közben."); }
+    } catch(e) { alert("Hiba mentés közben."); document.getElementById('submitBtn').disabled = false; }
   }
 
-  async function deleteEntry(n, d) {
-    if(!confirm("Törlöd?")) return;
-    const url = `${SCRIPT_URL}?action=delete&nev=${encodeURIComponent(n)}&idopont=${encodeURIComponent(d)}`;
+  async function deleteEntry(nev, idopont) {
+    if(!confirm("Biztosan törlöd a jelentkezést?")) return;
+    document.getElementById('status').innerText = "Törlés...";
+    const url = `${SCRIPT_URL}?action=delete&nev=${encodeURIComponent(nev)}&idopont=${encodeURIComponent(idopont)}`;
     try { await fetch(url, { method: 'POST' }); await loadData(); } catch(e) { alert("Hiba törléskor."); }
   }
 </script>
