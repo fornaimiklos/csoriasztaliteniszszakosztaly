@@ -35,7 +35,9 @@
       justify-content: center;
     }
 
-    h1 span.icon { font-size: 26px; }
+    h1 span.icon {
+      font-size: 26px;
+    }
 
     h2 { font-size: 14px; margin: 0 0 20px; text-align: center; color: #555; }
 
@@ -63,7 +65,9 @@
       background: #ffffff;
     }
 
-    select { cursor: pointer; }
+    select {
+      cursor: pointer;
+    }
 
     button {
       margin-top: 10px;
@@ -74,10 +78,17 @@
       box-shadow: 0 6px 16px rgba(0,0,0,0.25);
     }
 
-    #submitBtn { background: linear-gradient(135deg,#ff4b73,#ff7b3d); }
-    #deleteBtn { background: #6c757d; }
+    #submitBtn {
+      background: linear-gradient(135deg,#ff4b73,#ff7b3d);
+    }
 
-    button:hover { filter: brightness(1.05); }
+    #deleteBtn {
+      background: #6c757d;
+    }
+
+    button:hover {
+      filter: brightness(1.05);
+    }
 
     button:disabled {
       opacity: 0.6;
@@ -85,7 +96,9 @@
       box-shadow: none;
     }
 
-    .field { margin-bottom: 14px; }
+    .field {
+      margin-bottom: 14px;
+    }
 
     .message {
       margin-top: 10px;
@@ -159,8 +172,8 @@
   </div>
 
   <script>
-    // IDE másold be AZT AZ URL-T, AMIT AZ ELŐBB TESZTELTÉL (ami most "Nem találtunk ilyen jelentkezést..." üzenetet adott)
-    const SCRIPT_URL = "IDE_ILLASZD_BE_A_WEBAPP_URLT";
+    // IDE ÍRD BE az Apps Script webapp URL-jét (ami /exec-re végződik)
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjVDYFpH6PHvFpCNeFONm7HZ6JVF00JfHLeUhaeKD03aNcp2biESNjLn0yPLfD4bv4/exec";
 
     const nameInput = document.getElementById("name");
     const dateSelect = document.getElementById("date");
