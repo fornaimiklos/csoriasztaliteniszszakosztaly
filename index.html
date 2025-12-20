@@ -48,7 +48,8 @@
   window.onload = loadData;
 
   async function loadData() {
-    document.getElementById('status').innerText = "Adatok frissítése...";
+    const statusDiv = document.getElementById('status');
+    statusDiv.innerText = "Adatok frissítése...";
     try {
       const resp = await fetch(SCRIPT_URL);
       globalData = await resp.json();
@@ -67,10 +68,9 @@
       }
       
       renderList();
-      document.getElementById('status').innerText = "";
+      statusDiv.innerText = "";
     } catch (e) { 
-      document.getElementById('status').innerText = "Hiba a kapcsolódáskor!";
-      console.error(e);
+      statusDiv.innerText = "Hiba a kapcsolódáskor!";
     }
   }
 
@@ -100,7 +100,6 @@
 
     if (!select.value) return;
 
-    // Meccsnap tiltás
     if (selectedOption.getAttribute('data-match') === "true") {
       msgBox.innerHTML = `<div class="warning" style="color:#d93025; background:#fce8e6; border-color:#fad2cf;">
         <b>Mérkőzés miatt, sajnos nincs lehetőség jelentkezni erre a napra!</b>
@@ -109,7 +108,6 @@
       return;
     }
 
-    // Létszám számláló (5-ös limit)
     const count = globalData.attendees.filter(a => a.idopont === select.value).length;
     msgBox.innerHTML = `<div class="limit-info">Aktuális létszám: ${count} / 5 fő</div>`;
 
@@ -129,25 +127,17 @@
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('status').innerText = "Mentés folyamatban...";
     
-    try {
-      await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"add", nev:n, idopont:d}) });
-      document.getElementById('name').value = "";
-      setTimeout(loadData, 2000);
-    } catch(e) {
-      alert("Hiba történt a mentés során.");
-      document.getElementById('submitBtn').disabled = false;
-    }
+    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"add", nev:n, idopont:d}) });
+    
+    document.getElementById('name').value = "";
+    setTimeout(loadData, 2000);
   }
 
   async function deleteEntry(n, d) {
     if(!confirm("Biztosan törlöd a jelentkezést?")) return;
     document.getElementById('status').innerText = "Törlés...";
-    try {
-      await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"delete", nev:n, idopont:d}) });
-      setTimeout(loadData, 2000);
-    } catch(e) {
-      alert("Hiba történt a törlés során.");
-    }
+    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action:"delete", nev:n, idopont:d}) });
+    setTimeout(loadData, 2000);
   }
 </script>
 </body>
