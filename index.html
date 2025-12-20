@@ -9,15 +9,15 @@
     body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
     .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
     .subtitle { color: #666; font-size: 0.85em; margin-bottom: 20px; display: block; }
-    input, select, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+    input, select, button { width: 100%; padding: 14px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
     button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
     button:active { transform: scale(0.98); }
     button:disabled { background: #ccc; cursor: not-allowed; }
     .attendee-item { background: #fff; border: 1px solid #eee; padding: 12px; margin: 10px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; text-align: left; }
     .del-btn { background: var(--d); width: auto; padding: 8px 12px; font-size: 11px; margin: 0; border-radius: 6px; }
     #status { color: var(--p); font-size: 13px; min-height: 18px; margin-bottom: 10px; font-weight: bold; }
-    .warning { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; font-size: 13px; margin: 10px 0; border: 1px solid #ffeeba; }
-    .limit-info { font-size: 12px; color: #555; font-weight: bold; }
+    .warning { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; font-size: 13px; margin: 10px 0; border: 1px solid #ffeeba; text-align: left; }
+    .limit-info { font-size: 14px; color: #333; font-weight: bold; margin-top: 5px; }
   </style>
 </head>
 <body>
@@ -28,7 +28,9 @@
   
   <div id="formContainer">
     <input type="text" id="name" placeholder="Írd be a neved...">
-    <select id="dateSelect" onchange="checkSelection()"><option>Betöltés...</option></select>
+    <select id="dateSelect" onchange="checkSelection()">
+        <option value="" disabled selected>-- Válassz időpontot --</option>
+    </select>
     <div id="msgBox"></div>
     <button id="submitBtn" onclick="submitData()">OTT LESZEK!</button>
   </div>
@@ -52,8 +54,17 @@
       globalData = await resp.json();
       
       const select = document.getElementById('dateSelect');
-      select.innerHTML = '<option value="" disabled selected>-- Válassz időpontot --</option>' + 
-                         globalData.dates.map(d => `<option value="${d.full}" data-match="${d.isMatchDay}">${d.full}</option>`).join('');
+      select.innerHTML = '<option value="" disabled selected>-- Válassz időpontot --</option>';
+      
+      if(globalData.dates) {
+        globalData.dates.forEach(d => {
+          let opt = document.createElement('option');
+          opt.value = d.full;
+          opt.innerText = d.full;
+          opt.setAttribute('data-match', d.isMatchDay);
+          select.appendChild(opt);
+        });
+      }
       
       renderList();
       document.getElementById('status').innerText = "";
@@ -64,7 +75,7 @@
 
   function renderList() {
     const list = document.getElementById('listBody');
-    if (!globalData.attendees.length) {
+    if (!globalData.attendees || !globalData.attendees.length) {
       list.innerHTML = "<p style='color:#999;'>Még nincs jelentkező.</p>";
       return;
     }
@@ -88,19 +99,22 @@
 
     if (!select.value) return;
 
-    // Meccsnap ellenőrzés
     if (selectedOption.getAttribute('data-match') === "true") {
-      msgBox.innerHTML = `<div class="warning" style="color:red; border-color:red;">Mérkőzés miatt, sajnos nincs lehetőség jelentkezni erre a napra!</div>`;
+      msgBox.innerHTML = `<div class="warning" style="color:#d93025; background:#fce8e6; border-color:#fad2cf;">
+        <b>Mérkőzés miatt, sajnos nincs lehetőség jelentkezni erre a napra!</b>
+      </div>`;
       btn.disabled = true;
       return;
     }
 
-    // Létszám ellenőrzés
     const count = globalData.attendees.filter(a => a.idopont === select.value).length;
     msgBox.innerHTML = `<div class="limit-info">Aktuális létszám: ${count} / 5 fő</div>`;
 
     if (count >= 5) {
-      msgBox.innerHTML += `<div class="warning">Túljelentkezés! Kérlek vedd figyelembe, hogy előfordulhat, ha a túljelentkezés ellenére eljössz, hogy lesz olyan amikor csak ülsz és várod hogy felszabaduljon a játéklehetőség!</div>`;
+      msgBox.innerHTML += `<div class="warning">
+        <b>Túljelentkezés!</b><br>
+        Kérlek vedd figyelembe, hogy előfordulhat, ha a túljelentkezés ellenére eljössz, hogy lesz olyan amikor csak ülsz és várod hogy felszabaduljon a játéklehetőség!
+      </div>`;
     }
   }
 
