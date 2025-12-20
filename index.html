@@ -1,146 +1,106 @@
 <!DOCTYPE html>
-<html lang="hu">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edzés Jelentkezés</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 15px; background-color: #28a745; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
-        #status { margin-top: 15px; font-weight: bold; font-size: 14px; }
-        .attendee-list { margin-top: 20px; text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; display: none; border: 1px solid #eee; }
-        .attendee-list h3 { font-size: 16px; margin-top: 0; color: #555; }
-        .attendee-list ul { list-style: none; padding: 0; margin: 0; }
-        .attendee-list li { padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
-        .delete-btn { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
-        .limit-info { color: #d9534f; font-weight: bold; margin: 10px 0; font-size: 14px; }
-    </style>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px; /* Ez korlátozza a szélességet, hogy ne nyúljon el */
+      text-align: center;
+    }
+    h2 { margin-bottom: 5px; color: #333; }
+    .subtitle { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+    
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-sizing: border-box; /* Fontos, hogy ne lógjon ki */
+      font-size: 16px;
+    }
+    
+    button {
+      width: 100%;
+      padding: 15px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 18px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    
+    button:hover { background-color: #218838; }
+
+    #attendeeList {
+      margin-top: 30px;
+      text-align: left;
+      border-top: 1px solid #eee;
+      padding-top: 20px;
+    }
+
+    .attendee-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: #fff;
+      border-bottom: 1px solid #fafafa;
+    }
+
+    .delete-btn {
+      background-color: #dc3545;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 5px;
+      font-size: 14px;
+      width: auto; /* A törlés gomb ne legyen teljes szélességű */
+      margin: 0;
+    }
+  </style>
 </head>
 <body>
 
 <div class="container">
   <h2>🏓 Edzés Jelentkezés</h2>
-  <p style="text-align: center; margin-top: -10px; color: #666;">(Tagoknak nem kell jelentkezni)</p>
-  
+  <div class="subtitle">(Tagoknak nem kell jelentkezni)</div>
+
   <input type="text" id="name" placeholder="Írd be a neved...">
+  
+  <select id="dateSelect">
+    <option>-- Időpont betöltése... --</option>
+  </select>
+
+  <div id="status" style="color: #dc3545; font-weight: bold; margin: 10px 0;"></div>
+
+  <button onclick="submitData()">OTT LESZEK!</button>
+
+  <div id="attendeeList">
+    <strong>Eddigi jelentkezők:</strong>
+    <div id="listContainer"></div>
   </div>
-    
-    <select id="idopont" onchange="updateAttendeeList()">
-        <option disabled selected value="">-- Időpont betöltése... --</option>
-    </select>
-
-    <div id="limitMsg" class="limit-info"></div>
-
-    <button id="submitBtn" onclick="submitForm()">OTT LESZEK!</button>
-    <p id="status"></p>
-
-    <div id="attendeeBox" class="attendee-list">
-        <h3>Eddigi jelentkezők:</h3>
-        <ul id="list"></ul>
-    </div>
 </div>
 
 <script>
-    // IDE MÁSOLD BE AZ ÚJ GOOGLE SCRIPT URL-EDET!
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzo2LQn_B7pyMLuAv8RkCm9Cz9hJFp-G9nrCbSeej_3pGz7hqskgDoJEs4HzPqCjik8/exec";
-
-    let allAttendees = [];
-    let clientIp = "";
-
-    // IP lekérése
-    fetch("https://api.ipify.org?format=json").then(r => r.json()).then(data => { clientIp = data.ip; });
-
-    window.onload = function() {
-        loadDates();
-        loadAttendees();
-    };
-
-    function loadDates() {
-        const status = document.getElementById('status');
-        status.innerText = "Időpontok keresése...";
-        
-        fetch(SCRIPT_URL + "?action=getDates")
-            .then(res => res.json())
-            .then(data => {
-                const s = document.getElementById('idopont');
-                s.innerHTML = "<option disabled selected value=''>-- Válassz időpontot... --</option>";
-                if (data.length === 0) {
-                    status.innerText = "Nincs elérhető időpont a táblázatban!";
-                    return;
-                }
-                data.forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d;
-                    opt.textContent = d;
-                    s.appendChild(opt);
-                });
-                status.innerText = "";
-            })
-            .catch(err => {
-                status.innerText = "Hiba az időpontok betöltésekor!";
-                console.error(err);
-            });
-    }
-
-    function loadAttendees() {
-        fetch(SCRIPT_URL + "?action=getAttendees")
-            .then(res => res.json())
-            .then(data => {
-                allAttendees = data;
-                updateAttendeeList();
-            });
-    }
-
-    function updateAttendeeList() {
-        const date = document.getElementById('idopont').value;
-        const filtered = allAttendees.filter(a => a.idopont === date);
-        const count = filtered.length;
-        
-        document.getElementById('limitMsg').innerText = `Létszám: ${count} / 5 fő`;
-        document.getElementById('submitBtn').disabled = count >= 5;
-        document.getElementById('attendeeBox').style.display = date ? "block" : "none";
-        
-        document.getElementById('list').innerHTML = filtered.length > 0 
-            ? filtered.map(a => `<li>✅ ${a.nev} <button class="delete-btn" onclick="deleteSelf('${a.nev}','${a.idopont}')">Törlés</button></li>`).join("")
-            : "<li>Még nincs jelentkező.</li>";
-    }
-
-    function submitForm() {
-        const nev = document.getElementById('nev').value.trim();
-        const date = document.getElementById('idopont').value;
-        if (!nev || !date) { alert("Név és időpont kötelező!"); return; }
-
-        document.getElementById('status').innerText = "Küldés...";
-        fetch(SCRIPT_URL, {
-            method: "POST", mode: "no-cors",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `action=add&nev=${encodeURIComponent(nev)}&idopont=${encodeURIComponent(date)}&ip=${encodeURIComponent(clientIp)}`
-        }).then(() => { 
-            document.getElementById('status').innerText = "Sikeres jelentkezés! Frissítés...";
-            setTimeout(() => location.reload(), 1500); 
-        });
-    }
-
-    function deleteSelf(nev, idopont) {
-        const beirtNev = document.getElementById('nev').value.trim();
-        if (beirtNev !== nev) { 
-            alert("A törléshez írd be a nevedet felülre!"); 
-            return; 
-        }
-        if (!confirm("Biztosan törlöd a jelentkezésed?")) return;
-
-        fetch(SCRIPT_URL, {
-            method: "POST", mode: "no-cors",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `action=delete&nev=${encodeURIComponent(nev)}&idopont=${encodeURIComponent(idopont)}`
-        }).then(() => { 
-            alert("Sikeresen törölve!");
-            location.reload(); 
-        });
-    }
+  // Ide jön a korábbi JavaScript kódod (google.script.run... stb.)
 </script>
+
 </body>
 </html>
