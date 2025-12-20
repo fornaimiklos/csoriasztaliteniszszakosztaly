@@ -134,8 +134,24 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzo2LQn_B7pyMLuAv8RkCm9Cz9hJFp-G9nrCbSeej_3pGz7hqskgDoJEs4HzPqCjik8/exec";
 
     let allAttendees = [];
+    let clientIp = "";
+
+    // Külső IP lekérése (ipify)
+    function fetchIp() {
+        fetch("https://api.ipify.org?format=json")
+            .then(r => r.json())
+            .then(data => {
+                clientIp = data.ip || "";
+                console.log("IP:", clientIp);
+            })
+            .catch(err => {
+                console.error("IP lekérés hiba:", err);
+                clientIp = "";
+            });
+    }
 
     window.onload = function() {
+        fetchIp();
         loadDates();
         loadAttendees();
     };
@@ -153,6 +169,11 @@
                 opt.innerHTML = d;
                 s.appendChild(opt);
             });
+        })
+        .catch(err => {
+            console.error(err);
+            status.innerText = "Hiba az időpontok betöltésekor.";
+            status.style.color = "red";
         });
     }
 
@@ -162,6 +183,9 @@
         .then(data => {
             allAttendees = data;
             updateAttendeeList();
+        })
+        .catch(err => {
+            console.error("Jelentkezők betöltése sikertelen:", err);
         });
     }
 
@@ -170,7 +194,10 @@
         const box = document.getElementById('attendeeBox');
         const list = document.getElementById('list');
 
-        if (!date) { box.style.display = "none"; return; }
+        if (!date) { 
+            box.style.display = "none"; 
+            return; 
+        }
         box.style.display = "block";
 
         const filtered = allAttendees.filter(a => a.idopont === date);
@@ -180,7 +207,7 @@
         }
 
         list.innerHTML = filtered.map(a =>
-            `<li>✅ ${a.nev} 
+            `<li>✅ ${a.nev}
                 <button class="delete-btn" onclick="deleteSelf('${a.nev}','${a.idopont}')">Törlés</button>
             </li>`
         ).join('');
@@ -197,9 +224,24 @@
             return;
         }
 
+        if (!clientIp) {
+            status.innerText = "Nem sikerült IP-címet lekérni. Próbáld frissíteni az oldalt.";
+            status.style.color = "red";
+            return;
+        }
+
+        // 5 fő limit / nap
         const count = allAttendees.filter(a => a.idopont === date).length;
         if (count >= 5) {
             status.innerText = "Erre az edzésre betelt az 5 fős limit!";
+            status.style.color = "red";
+            return;
+        }
+
+        // 1 regisztráció / IP / nap
+        const ipExists = allAttendees.some(a => a.idopont === date && a.ip === clientIp);
+        if (ipExists) {
+            status.innerText = "Erről az IP-címről már van regisztráció erre az edzésre.";
             status.style.color = "red";
             return;
         }
@@ -211,35 +253,31 @@
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: "action=add&nev=" + encodeURIComponent(nev) +
-                  "&idopont=" + encodeURIComponent(date)
+            body: "action=add"
+                + "&nev=" + encodeURIComponent(nev)
+                + "&idopont=" + encodeURIComponent(date)
+                + "&ip=" + encodeURIComponent(clientIp)
         })
         .then(() => {
             status.innerText = "Sikeres jelentkezés! ✅";
             status.style.color = "green";
-            document.getElementById('nev').value = "";
+            // nevet bent hagyjuk, hogy törölni tudja magát
             setTimeout(loadAttendees, 1500);
+        })
+        .catch(() => {
+            status.innerText = "Hiba történt.";
+            status.style.color = "red";
         });
     }
 
-    function deleteSelf(nev,idopont) {
-        const me = document.getElementById('nev').value.trim();
-        if (me !== nev) {
-            alert("Csak a SAJÁT jelentkezésed törölheted.\nÍrd be a neved!");
+    function deleteSelf(nev, idopont) {
+        const meRaw = document.getElementById('nev').value || "";
+        const me = meRaw.trim();
+
+        if (!me) {
+            alert("Csak a SAJÁT jelentkezésed törölheted.\nElőbb írd be a neved a felső mezőbe!");
             return;
         }
 
-        fetch(SCRIPT_URL, {
-            method:"POST",
-            mode:"no-cors",
-            headers:{"Content-Type":"application/x-www-form-urlencoded"},
-            body:"action=delete&nev="+encodeURIComponent(nev)+"&idopont="+encodeURIComponent(idopont)
-        }).then(()=>{
-            alert("Törölve!");
-            loadAttendees();
-        });
-    }
-</script>
-
-</body>
-</html>
+        if (me !== nev) {
+            alert("A
