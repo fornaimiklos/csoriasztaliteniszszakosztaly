@@ -52,16 +52,21 @@
       const resp = await fetch(SCRIPT_URL);
       globalData = await resp.json();
       const select = document.getElementById('dateSelect');
+      const currentVal = select.value;
+      
       select.innerHTML = '<option value="" disabled selected>-- Válassz időpontot --</option>';
       
-      globalData.dates.forEach(d => {
-        let opt = document.createElement('option');
-        opt.value = d.label; // Ez a teljes szöveg (A + B oszlop)
-        opt.innerText = d.label;
-        opt.setAttribute('data-pure', d.pure); // Ez a tiszta dátum (csak A oszlop)
-        opt.setAttribute('data-match', d.isMatchDay); // Meccsnap jelző
-        select.appendChild(opt);
-      });
+      if(globalData.dates) {
+        globalData.dates.forEach(d => {
+          let opt = document.createElement('option');
+          opt.value = d.label;
+          opt.innerText = d.label;
+          opt.setAttribute('data-pure', d.pure);
+          opt.setAttribute('data-match', d.isMatchDay);
+          select.appendChild(opt);
+        });
+      }
+      if (currentVal) select.value = currentVal;
       updateView();
       statusDiv.innerText = "";
     } catch (e) { 
@@ -91,7 +96,7 @@
       msgBox.innerHTML = `<div class="warning" style="color:#d93025; background:#fce8e6; border-color:#fad2cf;">
         <b>Meccsnap miatt, csak szurkolókat várunk, edzésre most nem lesz lehetőséged jelentkezni! :)</b>
       </div>`;
-      btn.disabled = true; // Meccsnap tiltás
+      btn.disabled = true;
     }
 
     const filtered = globalData.attendees.filter(a => a.idopont === pureDate);
@@ -111,7 +116,7 @@
       if (count >= 5) {
         msgBox.innerHTML += `<div class="warning">
           <b>Túljelentkezés!</b><br>
-          Kérlek vedd figyelembe, hogy előfordulhat, ha a túljelentkezés ellenére eljössz...
+          Kérlek vedd figyelembe, hogy előfordulhat, ha a túljelentkezés ellenére eljössz, hogy lesz olyan amikor csak ülsz és várod hogy felszabaduljon a játéklehetőség!
         </div>`;
       }
     }
@@ -120,16 +125,19 @@
   async function submitData() {
     const n = document.getElementById('name').value.trim();
     const select = document.getElementById('dateSelect');
+    if(!select.value) return alert("Válassz időpontot!");
     const pureDate = select.options[select.selectedIndex].getAttribute('data-pure');
-    if(!n || !pureDate) return alert("Név és időpont választása kötelező!");
+    
+    if(!n) return alert("Írd be a neved!");
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('status').innerText = "Mentés...";
+    
     const url = `${SCRIPT_URL}?action=add&nev=${encodeURIComponent(n)}&idopont=${encodeURIComponent(pureDate)}`;
     try {
       await fetch(url, { method: 'POST' });
       document.getElementById('name').value = "";
       await loadData();
-    } catch(e) { alert("Hiba mentés közben."); document.getElementById('submitBtn').disabled = false; }
+    } catch(e) { alert("Hiba mentés közben."); }
   }
 
   async function deleteEntry(n, d) {
