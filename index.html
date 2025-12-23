@@ -21,7 +21,7 @@
     }
     h1{ margin:0 0 6px 0; font-size:28px; }
     .sub{ margin:0 0 18px 0; color:#666; font-weight:600; }
-    label{ display:block; margin:12px 0 6px; font-weight:700; }
+    label{ display:block; margin:12px 0 6px; font-weight:800; }
     input, select{
       width:100%;
       padding:12px;
@@ -37,7 +37,7 @@
       border-radius:14px;
       padding:14px 12px;
       font-size:16px;
-      font-weight:800;
+      font-weight:900;
       cursor:pointer;
       margin-top:12px;
     }
@@ -45,7 +45,7 @@
     .btn-danger{ background:#6b7078; color:#fff; }
     .msg{
       margin-top:10px;
-      font-weight:800;
+      font-weight:900;
       color:#d22;
       min-height:22px;
     }
@@ -58,11 +58,8 @@
       padding:10px 12px;
       margin-bottom:10px;
     }
-    .card h3{
-      margin:0 0 6px 0;
-      font-size:15px;
-    }
-    .note{ color:#444; font-weight:700; margin:0 0 6px 0; }
+    .card h3{ margin:0 0 6px 0; font-size:15px; }
+    .note{ color:#444; font-weight:800; margin:0 0 6px 0; }
     .pill{
       display:inline-block;
       background:#eef2ff;
@@ -70,10 +67,10 @@
       padding:4px 8px;
       border-radius:999px;
       font-size:12px;
-      font-weight:800;
+      font-weight:900;
       margin:2px 6px 2px 0;
     }
-    .muted{ color:#666; font-weight:700; }
+    .muted{ color:#666; font-weight:800; }
   </style>
 </head>
 <body>
@@ -99,89 +96,22 @@
   </div>
 
   <script>
-    // IDE TEDD A SAJÁT APPS SCRIPT WEBAPP URL-T:
+    /***********************
+     * 1) ÁLLÍTSD BE EZT:
+     ***********************/
     const SCRIPT_URL = "https://script.google.com/macros/s/IDE_AZ_EXEC_URL/exec";
 
-    const elName = document.getElementById("name");
+    const elName   = document.getElementById("name");
     const elSelect = document.getElementById("dateSelect");
-    const elMsg = document.getElementById("msg");
-    const elList = document.getElementById("list");
+    const elMsg    = document.getElementById("msg");
+    const elList   = document.getElementById("list");
 
     let trainingsCache = []; // [{dateText, noteText}]
-    let signupsCache = [];   // [{name, dateText, noteText, ts}]
+    let signupsCache   = []; // [{name, dateText, noteText, ts}]
 
     function setMsg(text, ok=false){
       elMsg.textContent = text || "";
       elMsg.className = "msg" + (ok ? " ok" : "");
-    }
-
-    function isMeccsnap(noteText){
-      return (noteText || "").toLowerCase().includes("meccsnap");
-    }
-
-    function selectedTraining(){
-      const val = elSelect.value; // dateText
-      return trainingsCache.find(t => t.dateText === val) || null;
-    }
-
-    // ---------- UI: dátumok feltöltése (csak 5) ----------
-    function populateDateSelect(trainings){
-      elSelect.innerHTML = `<option value="">-- Válassz időpontot --</option>`;
-
-      // ez volt nálad a hiba: firstFive nem volt definiálva
-      const firstFive = (trainings || []).slice(0, 5);
-
-      firstFive.forEach(t => {
-        const opt = document.createElement("option");
-        opt.value = t.dateText;
-
-        // A + B együtt jelenjen meg a listában
-        const note = t.noteText ? ` — ${t.noteText}` : "";
-        opt.textContent = `${t.dateText}${note}`;
-
-        elSelect.appendChild(opt);
-      });
-    }
-
-    // ---------- UI: jelentkezők listája ----------
-    function renderSignups(trainings, signups){
-      // csoportosítás edzésnapra
-      const map = new Map();
-      trainings.forEach(t => map.set(t.dateText, { training: t, names: [] }));
-
-      signups.forEach(s => {
-        if (!map.has(s.dateText)) {
-          map.set(s.dateText, { training: {dateText:s.dateText, noteText:s.noteText || ""}, names: [] });
-        }
-        map.get(s.dateText).names.push(s.name);
-      });
-
-      // csak a top 5 edzésnap listázása
-      const firstFive = (trainings || []).slice(0, 5);
-
-      elList.innerHTML = "";
-      if (!firstFive.length){
-        elList.innerHTML = `<p class="muted">Nincs megjeleníthető edzésnap.</p>`;
-        return;
-      }
-
-      firstFive.forEach(t => {
-        const bucket = map.get(t.dateText) || { training: t, names: [] };
-        const card = document.createElement("div");
-        card.className = "card";
-
-        const noteLine = t.noteText ? `<p class="note">${escapeHtml(t.noteText)}</p>` : "";
-        const pills = (bucket.names.length ? bucket.names : ["— még senki —"])
-          .map(n => `<span class="pill">${escapeHtml(n)}</span>`)
-          .join("");
-
-        card.innerHTML = `
-          <h3>${escapeHtml(t.dateText)}</h3>
-          ${noteLine}
-          <div>${pills}</div>
-        `;
-        elList.appendChild(card);
-      });
     }
 
     function escapeHtml(str){
@@ -193,7 +123,15 @@
         .replaceAll("'", "&#039;");
     }
 
-    // ---------- API hívás ----------
+    function isMeccsnap(noteText){
+      return (noteText || "").toLowerCase().includes("meccsnap");
+    }
+
+    function selectedTraining(){
+      const val = elSelect.value; // dateText
+      return trainingsCache.find(t => t.dateText === val) || null;
+    }
+
     async function api(action, params = {}){
       const url = new URL(SCRIPT_URL);
       url.searchParams.set("action", action);
@@ -203,33 +141,104 @@
       return await res.json();
     }
 
-    // ---------- Betöltés ----------
+    /*****************************************
+     * DÁTUMOK FELTÖLTÉSE (max 5, A+B együtt)
+     *****************************************/
+    function populateDateSelect(trainings){
+      elSelect.innerHTML = '<option value="">-- Válassz időpontot --</option>';
+
+      // FIX: firstFive mindig létezik
+      const firstFive = (trainings || []).slice(0, 5);
+
+      firstFive.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.dateText;
+
+        const note = t.noteText ? ` — ${t.noteText}` : "";
+        opt.textContent = `${t.dateText}${note}`;
+
+        elSelect.appendChild(opt);
+      });
+    }
+
+    /*****************************************
+     * JELENTKEZŐK LISTÁJA (edzésnaponként)
+     *****************************************/
+    function renderSignups(trainings, signups){
+      elList.innerHTML = "";
+
+      const firstFive = (trainings || []).slice(0, 5);
+
+      if(!firstFive.length){
+        elList.innerHTML = `<p class="muted">Nincs megjeleníthető edzésnap.</p>`;
+        return;
+      }
+
+      // map: dateText -> names
+      const map = new Map();
+      signups.forEach(s => {
+        if(!map.has(s.dateText)) map.set(s.dateText, []);
+        map.get(s.dateText).push(s.name);
+      });
+
+      firstFive.forEach(t => {
+        const names = map.get(t.dateText) || [];
+        const pills = (names.length ? names : ["— még senki —"])
+          .map(n => `<span class="pill">${escapeHtml(n)}</span>`)
+          .join("");
+
+        const noteLine = t.noteText ? `<p class="note">${escapeHtml(t.noteText)}</p>` : "";
+
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h3>${escapeHtml(t.dateText)}</h3>
+          ${noteLine}
+          <div>${pills}</div>
+        `;
+        elList.appendChild(card);
+      });
+    }
+
+    /*****************************************
+     * ADATOK BETÖLTÉSE
+     *****************************************/
     async function loadData(){
       try{
         setMsg("");
         const data = await api("getData");
-
         if(!data.ok) throw new Error(data.error || "Ismeretlen hiba.");
 
-        trainingsCache = data.trainings || [];
-        signupsCache = data.signups || [];
+        trainingsCache = (data.trainings || []).map(t => ({
+          dateText: String(t.dateText || "").trim(),
+          noteText: String(t.noteText || "").trim()
+        })).filter(t => t.dateText);
 
-        // fontos: legyen valami rendezésed – itt: szöveg szerint növekvő
+        signupsCache = (data.signups || []).map(s => ({
+          name: String(s.name || "").trim(),
+          dateText: String(s.dateText || "").trim(),
+          noteText: String(s.noteText || "").trim(),
+          ts: s.ts || ""
+        })).filter(s => s.name && s.dateText);
+
+        // rendezés: szöveg szerint
         trainingsCache.sort((a,b) => a.dateText.localeCompare(b.dateText, "hu"));
 
         populateDateSelect(trainingsCache);
         renderSignups(trainingsCache, signupsCache);
+
       } catch(err){
         console.error(err);
         setMsg("Hiba az adatok betöltésekor.");
       }
     }
 
-    // ---------- Jelentkezés ----------
+    /*****************************************
+     * JELENTKEZÉS
+     *****************************************/
     document.getElementById("signupBtn").addEventListener("click", async () => {
       try{
         setMsg("");
-
         const name = elName.value.trim();
         if(!name) return setMsg("Írd be a neved.");
 
@@ -256,21 +265,20 @@
       }
     });
 
-    // ---------- Törlés ----------
+    /*****************************************
+     * TÖRLÉS (név alapján; ha van kiválasztott nap, csak azt törli)
+     *****************************************/
     document.getElementById("deleteBtn").addEventListener("click", async () => {
       try{
         setMsg("");
-
         const name = elName.value.trim();
         if(!name) return setMsg("Add meg a nevet törléshez.");
 
-        // opcionális: ha ki van választva nap, csak azt töröljük
         const t = selectedTraining();
         const params = { name };
-        if (t) params.dateText = t.dateText;
+        if(t) params.dateText = t.dateText;
 
         const resp = await api("delete", params);
-
         if(!resp.ok) return setMsg(resp.error || "Nem sikerült a törlés.");
 
         setMsg(`Törölve (${resp.deleted} db).`, true);
@@ -281,7 +289,7 @@
       }
     });
 
-    // Indulás
+    // START
     loadData();
   </script>
 </body>
