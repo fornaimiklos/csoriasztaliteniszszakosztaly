@@ -203,7 +203,7 @@
     function populateDateSelect() {
       dateSelect.innerHTML = '<option value="">-- Válassz időpontot --</option>';
 
-      const firstFive = allSessions.slice(0, 5);
+      const firstFive = allSessions.slice(0, 12);
 
       firstFive.forEach(session => {
         const option = document.createElement("option");
