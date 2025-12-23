@@ -2,405 +2,286 @@
 <html lang="hu">
 <head>
   <meta charset="UTF-8" />
-  <title>Edzés Jelentkezés – Csóri asztalitenisz</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edzés Jelentkezés</title>
   <style>
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-
-    body {
-      background: #f0f2f5;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      padding: 20px;
+    body{
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background:#f0f2f5;
+      margin:0; padding:20px;
+      display:flex; justify-content:center; align-items:flex-start;
+      min-height:100vh;
     }
-
-    .container {
-      background: #ffffff;
-      border-radius: 24px;
-      padding: 24px 20px 32px;
-      width: 100%;
-      max-width: 360px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+    .container{
+      width:100%; max-width:420px;
+      background:#fff;
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,.08);
     }
-
-    h1 {
-      font-size: 26px;
-      margin: 0 0 4px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      justify-content: center;
+    h1{ margin:0 0 6px 0; font-size:28px; }
+    .sub{ margin:0 0 18px 0; color:#666; font-weight:600; }
+    label{ display:block; margin:12px 0 6px; font-weight:700; }
+    input, select{
+      width:100%;
+      padding:12px;
+      border-radius:12px;
+      border:1px solid #d9dbe0;
+      outline:none;
+      font-size:16px;
+      background:#fff;
     }
-
-    h1 span.icon { font-size: 26px; }
-
-    h2 { font-size: 14px; margin: 0 0 20px; text-align: center; color: #555; }
-
-    label {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 4px;
-      display: block;
+    button{
+      width:100%;
+      border:none;
+      border-radius:14px;
+      padding:14px 12px;
+      font-size:16px;
+      font-weight:800;
+      cursor:pointer;
+      margin-top:12px;
     }
-
-    input, select, button {
-      width: 100%;
-      border-radius: 14px;
-      border: 1px solid #d0d7de;
-      padding: 10px 12px;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      background: #f9fafb;
+    .btn-primary{ background:linear-gradient(90deg,#ff4d6d,#ff7a00); color:#fff; }
+    .btn-danger{ background:#6b7078; color:#fff; }
+    .msg{
+      margin-top:10px;
+      font-weight:800;
+      color:#d22;
+      min-height:22px;
     }
-
-    input:focus, select:focus {
-      border-color: #ff4b73;
-      box-shadow: 0 0 0 2px rgba(255,75,115,0.2);
-      background: #ffffff;
+    .ok{ color:#15803d; }
+    .section-title{ margin:18px 0 10px; font-size:20px; font-weight:900; }
+    .card{
+      background:#f8fafc;
+      border:1px solid #e5e7eb;
+      border-radius:14px;
+      padding:10px 12px;
+      margin-bottom:10px;
     }
-
-    select { cursor: pointer; }
-
-    button {
-      margin-top: 10px;
-      border: none;
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    .card h3{
+      margin:0 0 6px 0;
+      font-size:15px;
     }
-
-    #submitBtn { background: linear-gradient(135deg,#ff4b73,#ff7b3d); }
-    #deleteBtn { background: #6c757d; }
-
-    button:hover { filter: brightness(1.05); }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: default;
-      box-shadow: none;
+    .note{ color:#444; font-weight:700; margin:0 0 6px 0; }
+    .pill{
+      display:inline-block;
+      background:#eef2ff;
+      border:1px solid #c7d2fe;
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      margin:2px 6px 2px 0;
     }
-
-    .field { margin-bottom: 14px; }
-
-    .message {
-      margin-top: 10px;
-      font-size: 13px;
-      min-height: 18px;
-    }
-
-    .message.ok { color: #1a7f37; }
-    .message.error { color: #d32f2f; }
-
-    .registrations-title {
-      margin-top: 20px;
-      font-size: 16px;
-      font-weight: 700;
-      text-align: left;
-      border-top: 1px solid #eee;
-      padding-top: 14px;
-    }
-
-    .session-block {
-      margin-top: 8px;
-      padding: 8px 10px;
-      border-radius: 12px;
-      background: #f9fafb;
-      border: 1px solid #e0e4ea;
-    }
-
-    .session-date {
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .session-note {
-      font-size: 12px;
-      color: #ff4b73;
-      margin-bottom: 4px;
-    }
-
-    .no-registrations {
-      font-size: 13px;
-      color: #777;
-      margin-top: 6px;
-    }
+    .muted{ color:#666; font-weight:700; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1><span class="icon">🏓</span>Edzés Jelentkezés</h1>
-    <h2>(Tagoknak NEM kell regisztrálni)</h2>
+    <h1>Edzés Jelentkezés</h1>
+    <p class="sub">(Tagoknak NEM kell regisztrálni)</p>
 
-    <div class="field">
-      <label for="name">Írd be a neved…</label>
-      <input id="name" type="text" placeholder="Csóri Pingpongos" />
-    </div>
+    <label for="name">Írd be a neved...</label>
+    <input id="name" type="text" placeholder="Csóri Pingpongos" />
 
-    <div class="field">
-      <label for="date">Válassz időpontot</label>
-      <select id="date">
-        <option value="">-- Válassz időpontot --</option>
-      </select>
-    </div>
+    <label for="dateSelect">Válassz időpontot</label>
+    <select id="dateSelect">
+      <option value="">-- Válassz időpontot --</option>
+    </select>
 
-    <button id="submitBtn">Jelentkezem</button>
-    <button id="deleteBtn">Jelentkezésem törlése</button>
+    <button class="btn-primary" id="signupBtn">Jelentkezem</button>
+    <button class="btn-danger" id="deleteBtn">Jelentkezésem törlése</button>
 
-    <p id="infoMessage" class="message"></p>
+    <div class="msg" id="msg"></div>
 
-    <div class="registrations-title">Jelentkezők edzésnaponként</div>
-    <div id="registrationsContainer"></div>
+    <div class="section-title">Jelentkezők edzésnaponként</div>
+    <div id="list"></div>
   </div>
 
   <script>
-    // Apps Script webapp URL – ez a te címed
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzyKjTLahMgJ9oKXEKUaCWB3uMQJA3iOCgGN-uvjw3CatB6GymuMZcpUVBtyArANEoB/exec";
+    // IDE TEDD A SAJÁT APPS SCRIPT WEBAPP URL-T:
+    const SCRIPT_URL = "https://script.google.com/macros/s/IDE_AZ_EXEC_URL/exec";
 
-    const nameInput = document.getElementById("name");
-    const dateSelect = document.getElementById("date");
-    const submitBtn = document.getElementById("submitBtn");
-    const deleteBtn = document.getElementById("deleteBtn");
-    const infoMessage = document.getElementById("infoMessage");
-    const registrationsContainer = document.getElementById("registrationsContainer");
+    const elName = document.getElementById("name");
+    const elSelect = document.getElementById("dateSelect");
+    const elMsg = document.getElementById("msg");
+    const elList = document.getElementById("list");
 
-    let allSessions = [];          // {dateText, note, isMatchDay}
-    let currentRegistrations = []; // [ [Név, Időpont], ... ]
+    let trainingsCache = []; // [{dateText, noteText}]
+    let signupsCache = [];   // [{name, dateText, noteText, ts}]
 
-    async function loadData() {
-      infoMessage.textContent = "Adatok betöltése…";
-      infoMessage.className = "message";
-
-      try {
-        const res = await fetch(SCRIPT_URL + "?action=getData");
-        const data = await res.json();
-
-        allSessions = (data.dates || [])
-          .filter(row => row[0])
-          .map(row => {
-            const dateText = row[0];
-            const note = row[1] || "";
-            const isMatchDay = note.toLowerCase().includes("meccsnap");
-            return { dateText, note, isMatchDay };
-          });
-
-        populateDateSelect();
-        renderRegistrations(data.registrations || []);
-
-        infoMessage.textContent = "";
-      } catch (err) {
-        console.error("Hiba getData közben:", err);
-        infoMessage.textContent = "Hiba az adatok betöltésekor.";
-        infoMessage.className = "message error";
-      }
+    function setMsg(text, ok=false){
+      elMsg.textContent = text || "";
+      elMsg.className = "msg" + (ok ? " ok" : "");
     }
 
-    function populateDateSelect() {
-      dateSelect.innerHTML = '<option value="">-- Válassz időpontot --</option>';
+    function isMeccsnap(noteText){
+      return (noteText || "").toLowerCase().includes("meccsnap");
+    }
 
-      const firstTen = allSessions.slice(0, 10);
+    function selectedTraining(){
+      const val = elSelect.value; // dateText
+      return trainingsCache.find(t => t.dateText === val) || null;
+    }
 
-      firstFive.forEach(session => {
-        const option = document.createElement("option");
-        option.value = session.dateText;
+    // ---------- UI: dátumok feltöltése (csak 5) ----------
+    function populateDateSelect(trainings){
+      elSelect.innerHTML = `<option value="">-- Válassz időpontot --</option>`;
 
-        let label = session.dateText;
-        if (session.note && session.note.trim().length > 0) {
-          label += " – " + session.note;
-        }
+      // ez volt nálad a hiba: firstFive nem volt definiálva
+      const firstFive = (trainings || []).slice(0, 5);
 
-        if (session.isMatchDay) {
-          option.dataset.meccsnap = "true";
-        }
+      firstFive.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.dateText;
 
-        option.textContent = label;
-        dateSelect.appendChild(option);
+        // A + B együtt jelenjen meg a listában
+        const note = t.noteText ? ` — ${t.noteText}` : "";
+        opt.textContent = `${t.dateText}${note}`;
+
+        elSelect.appendChild(opt);
       });
     }
 
-    // csak a kiválasztott nap jelentkezői látszanak
-    function renderSelectedDateRegistrations() {
-      registrationsContainer.innerHTML = "";
+    // ---------- UI: jelentkezők listája ----------
+    function renderSignups(trainings, signups){
+      // csoportosítás edzésnapra
+      const map = new Map();
+      trainings.forEach(t => map.set(t.dateText, { training: t, names: [] }));
 
-      const selectedDate = dateSelect.value;
-      if (!selectedDate) {
-        const p = document.createElement("p");
-        p.className = "no-registrations";
-        p.textContent = "Válassz edzésnapot, hogy lásd a jelentkezőket.";
-        registrationsContainer.appendChild(p);
-        return;
-      }
-
-      const registrationsForDate = currentRegistrations.filter(r => r[1] === selectedDate);
-
-      const sessionDiv = document.createElement("div");
-      sessionDiv.className = "session-block";
-
-      const sessionTitle = document.createElement("div");
-      sessionTitle.className = "session-date";
-      sessionTitle.textContent = selectedDate;
-      sessionDiv.appendChild(sessionTitle);
-
-      const sessionRow = allSessions.find(s => s.dateText === selectedDate);
-      if (sessionRow && sessionRow.note) {
-        const noteDiv = document.createElement("div");
-        noteDiv.className = "session-note";
-        noteDiv.textContent = sessionRow.note;
-        sessionDiv.appendChild(noteDiv);
-      }
-
-      if (registrationsForDate.length === 0) {
-        const p = document.createElement("p");
-        p.className = "no-registrations";
-        p.textContent = "Erre az időpontra még nincs jelentkező.";
-        sessionDiv.appendChild(p);
-      } else {
-        const list = document.createElement("ul");
-        list.style.paddingLeft = "18px";
-        list.style.margin = "0";
-
-        registrationsForDate.forEach(row => {
-          const li = document.createElement("li");
-          li.textContent = row[0];
-          list.appendChild(li);
-        });
-
-        sessionDiv.appendChild(list);
-      }
-
-      registrationsContainer.appendChild(sessionDiv);
-    }
-
-    function renderRegistrations(registrations) {
-      currentRegistrations = registrations || [];
-      renderSelectedDateRegistrations();
-    }
-
-    async function handleSubmit() {
-      infoMessage.textContent = "";
-      infoMessage.className = "message";
-
-      const name = nameInput.value.trim();
-      const dateText = dateSelect.value;
-
-      if (!name) {
-        infoMessage.textContent = "Írd be a neved!";
-        infoMessage.className = "message error";
-        return;
-      }
-
-      if (!dateText) {
-        infoMessage.textContent = "Válassz egy edzésnapot!";
-        infoMessage.className = "message error";
-        return;
-      }
-
-      const selectedSession = allSessions.find(s => s.dateText === dateText);
-
-      // Meccsnap tiltás
-      if (selectedSession && selectedSession.isMatchDay) {
-        infoMessage.textContent =
-          "Várunk szeretettel szurkolóként, de meccsnap miatt nincs lehetőség edzésre jelentkezni ezen a napon. 🙂";
-        infoMessage.className = "message error";
-        return;
-      }
-
-      // Max 5 fő / nap
-      const countForDate = currentRegistrations.filter(r => r[1] === dateText).length;
-      if (countForDate >= 5) {
-        infoMessage.textContent =
-          "Erre az edzésnapra betelt a létszám (max. 5 fő). Kérlek válassz másik időpontot, vagy egyeztess az edzővel.";
-        infoMessage.className = "message error";
-        return;
-      }
-
-      submitBtn.disabled = true;
-
-      try {
-        const params = new URLSearchParams({
-          action: "register",
-          name,
-          date: dateText
-        });
-
-        const res = await fetch(SCRIPT_URL + "?" + params.toString());
-        const data = await res.json();
-
-        if (data.success) {
-          infoMessage.textContent = "Sikeres jelentkezés! 🙂";
-          infoMessage.className = "message ok";
-          nameInput.value = "";
-          renderRegistrations(data.registrations || []);
-        } else {
-          infoMessage.textContent = data.message || "Nem sikerült a jelentkezés.";
-          infoMessage.className = "message error";
+      signups.forEach(s => {
+        if (!map.has(s.dateText)) {
+          map.set(s.dateText, { training: {dateText:s.dateText, noteText:s.noteText || ""}, names: [] });
         }
-      } catch (err) {
-        console.error("Hiba register közben:", err);
-        infoMessage.textContent = "Hiba történt a jelentkezés közben.";
-        infoMessage.className = "message error";
-      } finally {
-        submitBtn.disabled = false;
+        map.get(s.dateText).names.push(s.name);
+      });
+
+      // csak a top 5 edzésnap listázása
+      const firstFive = (trainings || []).slice(0, 5);
+
+      elList.innerHTML = "";
+      if (!firstFive.length){
+        elList.innerHTML = `<p class="muted">Nincs megjeleníthető edzésnap.</p>`;
+        return;
+      }
+
+      firstFive.forEach(t => {
+        const bucket = map.get(t.dateText) || { training: t, names: [] };
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const noteLine = t.noteText ? `<p class="note">${escapeHtml(t.noteText)}</p>` : "";
+        const pills = (bucket.names.length ? bucket.names : ["— még senki —"])
+          .map(n => `<span class="pill">${escapeHtml(n)}</span>`)
+          .join("");
+
+        card.innerHTML = `
+          <h3>${escapeHtml(t.dateText)}</h3>
+          ${noteLine}
+          <div>${pills}</div>
+        `;
+        elList.appendChild(card);
+      });
+    }
+
+    function escapeHtml(str){
+      return String(str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    // ---------- API hívás ----------
+    async function api(action, params = {}){
+      const url = new URL(SCRIPT_URL);
+      url.searchParams.set("action", action);
+      Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+
+      const res = await fetch(url.toString(), { method: "GET" });
+      return await res.json();
+    }
+
+    // ---------- Betöltés ----------
+    async function loadData(){
+      try{
+        setMsg("");
+        const data = await api("getData");
+
+        if(!data.ok) throw new Error(data.error || "Ismeretlen hiba.");
+
+        trainingsCache = data.trainings || [];
+        signupsCache = data.signups || [];
+
+        // fontos: legyen valami rendezésed – itt: szöveg szerint növekvő
+        trainingsCache.sort((a,b) => a.dateText.localeCompare(b.dateText, "hu"));
+
+        populateDateSelect(trainingsCache);
+        renderSignups(trainingsCache, signupsCache);
+      } catch(err){
+        console.error(err);
+        setMsg("Hiba az adatok betöltésekor.");
       }
     }
 
-    async function handleDelete() {
-      infoMessage.textContent = "";
-      infoMessage.className = "message";
+    // ---------- Jelentkezés ----------
+    document.getElementById("signupBtn").addEventListener("click", async () => {
+      try{
+        setMsg("");
 
-      const name = nameInput.value.trim();
-      const dateText = dateSelect.value;
+        const name = elName.value.trim();
+        if(!name) return setMsg("Írd be a neved.");
 
-      if (!name) {
-        infoMessage.textContent = "A törléshez is írd be a neved.";
-        infoMessage.className = "message error";
-        return;
-      }
+        const t = selectedTraining();
+        if(!t) return setMsg("Válassz időpontot.");
 
-      if (!dateText) {
-        infoMessage.textContent = "A törléshez is válassz egy edzésnapot.";
-        infoMessage.className = "message error";
-        return;
-      }
+        if(isMeccsnap(t.noteText)){
+          return setMsg("Meccsnap miatt edzés nem, de a szurkolás lehetséges! :)");
+        }
 
-      deleteBtn.disabled = true;
-
-      try {
-        const params = new URLSearchParams({
-          action: "unregister",
+        const resp = await api("signup", {
           name,
-          date: dateText
+          dateText: t.dateText,
+          noteText: t.noteText || ""
         });
 
-        const res = await fetch(SCRIPT_URL + "?" + params.toString());
-        const data = await res.json();
+        if(!resp.ok) return setMsg(resp.error || "Nem sikerült a jelentkezés.");
 
-        if (data.success) {
-          infoMessage.textContent = "A jelentkezésed törölve lett.";
-          infoMessage.className = "message ok";
-          renderRegistrations(data.registrations || []);
-        } else {
-          infoMessage.textContent = data.message || "Nem sikerült a törlés.";
-          infoMessage.className = "message error";
-        }
-      } catch (err) {
-        console.error("Hiba unregister közben:", err);
-        infoMessage.textContent = "Hiba történt a törlés közben.";
-        infoMessage.className = "message error";
-      } finally {
-        deleteBtn.disabled = false;
+        setMsg("Sikeres jelentkezés!", true);
+        await loadData();
+      } catch(err){
+        console.error(err);
+        setMsg("Hiba a jelentkezés során.");
       }
-    }
+    });
 
-    submitBtn.addEventListener("click", handleSubmit);
-    deleteBtn.addEventListener("click", handleDelete);
-    dateSelect.addEventListener("change", renderSelectedDateRegistrations);
+    // ---------- Törlés ----------
+    document.getElementById("deleteBtn").addEventListener("click", async () => {
+      try{
+        setMsg("");
 
+        const name = elName.value.trim();
+        if(!name) return setMsg("Add meg a nevet törléshez.");
+
+        // opcionális: ha ki van választva nap, csak azt töröljük
+        const t = selectedTraining();
+        const params = { name };
+        if (t) params.dateText = t.dateText;
+
+        const resp = await api("delete", params);
+
+        if(!resp.ok) return setMsg(resp.error || "Nem sikerült a törlés.");
+
+        setMsg(`Törölve (${resp.deleted} db).`, true);
+        await loadData();
+      } catch(err){
+        console.error(err);
+        setMsg("Hiba a törlés során.");
+      }
+    });
+
+    // Indulás
     loadData();
   </script>
 </body>
