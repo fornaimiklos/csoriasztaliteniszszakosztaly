@@ -5,222 +5,147 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Edzés Jelentkezés</title>
   <style>
-    :root{
-      --bg:#f0f2f5; --card:#fff; --text:#111827; --muted:#6b7280;
-      --danger:#dc2626; --ok:#16a34a; --warn:#b45309;
-      --btn1:#ff4d6d; --btn2:#ff7a00; --btnGray:#6b7280;
-      --border:#e5e7eb; --shadow:0 10px 30px rgba(0,0,0,.08);
-      --radius:18px;
+    body{
+      margin:0;padding:20px;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+      background:#f0f2f5;
+      display:flex;justify-content:center;align-items:flex-start;
     }
-    body{margin:0;padding:20px;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);display:flex;justify-content:center;align-items:flex-start;min-height:100vh;}
-    .container{width:420px;max-width:92vw;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;}
-    h1{margin:0 0 6px;font-size:34px;letter-spacing:-.5px;}
-    .sub{margin:0 0 18px;color:var(--muted);font-size:18px;}
-    label{display:block;margin:16px 0 8px;font-weight:950;font-size:20px;}
-    input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--border);font-size:18px;outline:none;background:#fff;box-sizing:border-box;}
-    .btn{width:100%;border:none;border-radius:16px;padding:16px 14px;font-size:22px;font-weight:950;cursor:pointer;margin-top:14px;color:#fff;}
-    .btnPrimary{background:linear-gradient(90deg,var(--btn1),var(--btn2));}
-    .btnGray{background:var(--btnGray);}
-    .noteBox{margin-top:10px;padding:12px;border:1px dashed var(--border);border-radius:14px;color:var(--muted);font-size:16px;min-height:44px;display:flex;align-items:center;}
-    .msg{margin-top:12px;font-weight:950;font-size:18px;}
-    .msg.err{color:var(--danger);}
-    .msg.ok{color:var(--ok);}
-    .msg.warn{color:var(--warn);}
-    .sectionTitle{margin:22px 0 8px;font-size:28px;font-weight:950;}
-    .group{border-top:1px solid var(--border);padding-top:10px;margin-top:10px;}
-    .dateHeader{font-weight:950;font-size:18px;margin:8px 0 6px;}
-    .tag{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--border);color:var(--muted);font-size:13px;margin-left:8px;}
-    ul{margin:0 0 6px 18px;}
-    li{margin:4px 0;}
-    .smallHelp{margin-top:6px;font-size:14px;color:var(--muted);}
-    .tiny{font-size:12px;color:var(--muted);margin-top:10px;}
+    .box{
+      width:420px;max-width:95%;
+      background:#fff;border-radius:18px;
+      padding:22px;
+      box-shadow:0 10px 30px rgba(0,0,0,.1);
+    }
+    h1{margin:0;font-size:32px;}
+    .sub{color:#666;margin-bottom:16px;}
+    label{display:block;margin:14px 0 6px;font-weight:700;}
+    input,select{
+      width:100%;padding:14px;font-size:16px;
+      border-radius:12px;border:1px solid #ddd;
+    }
+    button{
+      width:100%;padding:16px;font-size:18px;
+      border-radius:14px;border:none;
+      cursor:pointer;margin-top:12px;
+      color:#fff;font-weight:800;
+    }
+    .btn1{background:linear-gradient(90deg,#ff4d6d,#ff7a00);}
+    .btn2{background:#6b7280;}
+    .msg{margin-top:12px;font-weight:700}
+    .err{color:#dc2626}
+    .ok{color:#16a34a}
+    .warn{color:#b45309}
+    ul{margin-left:20px}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Edzés Jelentkezés</h1>
-    <p class="sub">(Tagoknak NEM kell regisztrálni)</p>
 
-    <label for="nameInput">Írd be a neved...</label>
-    <input id="nameInput" type="text" placeholder="Pl. Csóri Pingpongos" autocomplete="name" />
+<div class="box">
+  <h1>Edzés Jelentkezés</h1>
+  <div class="sub">(Tagoknak NEM kell regisztrálni)</div>
 
-    <label for="trainingSelect">Válassz időpontot</label>
-    <select id="trainingSelect">
-      <option value="">-- Válassz időpontot --</option>
-    </select>
+  <label>Név</label>
+  <input id="name" placeholder="Pl. Csóri Pingpongos">
 
-    <div id="noteBox" class="noteBox">Megjegyzés: —</div>
+  <label>Időpont</label>
+  <select id="dates">
+    <option value="">-- Válassz időpontot --</option>
+  </select>
 
-    <button id="signupBtn" class="btn btnPrimary">Jelentkezem</button>
-    <button id="deleteBtn" class="btn btnGray">Jelentkezésem törlése</button>
+  <div id="note" style="margin-top:8px;color:#666"></div>
 
-    <div class="smallHelp">Törlés: név alapján (és ha kiválasztasz időpontot, akkor csak arra a napra).</div>
+  <button class="btn1" onclick="signup()">Jelentkezem</button>
+  <button class="btn2" onclick="del()">Jelentkezésem törlése</button>
 
-    <div id="msg" class="msg"></div>
+  <div id="msg" class="msg"></div>
 
-    <div class="sectionTitle">Jelentkezők edzésnaponként</div>
-    <div id="signupsRoot"></div>
-
-    <div class="tiny">Ha “Failed to fetch / ERR_FAILED” hiba van: kapcsold ki az AdBlock/Privacy/Volume Booster bővítményt erre az oldalra.</div>
-  </div>
+  <h2 style="margin-top:24px">Jelentkezők</h2>
+  <div id="list"></div>
+</div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzHSLSuBMvdNyebi0yH_FSZd1n2HCTCBi0URUnRTjJpwCL_hCJJdWkacV5neQTtHVhC/exec";
-const MAX_TRAININGS = 5;
+const API =
+"https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLj2cvPDf_DlbdPPns07mP-eNZOrcMEaCZ3k25OMVJbAkBzWySa-TQuosv0N4b9va3pwDU99wPj2BO-AxYRkih6ZbhxaXAdGjCjr-G4ITS";
 
-const els = {
-  name: document.getElementById("nameInput"),
-  sel: document.getElementById("trainingSelect"),
-  note: document.getElementById("noteBox"),
-  msg: document.getElementById("msg"),
-  signupBtn: document.getElementById("signupBtn"),
-  deleteBtn: document.getElementById("deleteBtn"),
-  signupsRoot: document.getElementById("signupsRoot"),
+let DATA = {trainings:[], signups:[]};
+
+async function api(params){
+  const url = API + "&" + new URLSearchParams(params);
+  const r = await fetch(url);
+  return await r.json();
+}
+
+async function load(){
+  const d = await api({action:"getData"});
+  DATA = d;
+  renderDates();
+  renderList();
+}
+
+function renderDates(){
+  const s = document.getElementById("dates");
+  s.innerHTML = '<option value="">-- Válassz időpontot --</option>';
+  DATA.trainings.slice(0,5).forEach(t=>{
+    const o = document.createElement("option");
+    o.value = t.dateText;
+    o.textContent = t.dateText;
+    o.dataset.note = t.noteText||"";
+    s.appendChild(o);
+  });
+}
+
+document.getElementById("dates").onchange = e=>{
+  document.getElementById("note").textContent =
+    e.target.selectedOptions[0]?.dataset.note || "";
 };
 
-let state = { trainings: [], signups: [] };
+async function signup(){
+  const name = document.getElementById("name").value.trim();
+  const date = document.getElementById("dates").value;
+  if(!name||!date) return msg("Hiányzó adat","err");
 
-function normalize(s){ return String(s || "").trim(); }
-function setMsg(text, type=""){
-  els.msg.textContent = text || "";
-  els.msg.className = "msg" + (type ? " " + type : "");
-}
-function isMeccsnap(noteText){
-  return normalize(noteText).toLowerCase().includes("meccsnap");
-}
+  const note = document.getElementById("dates")
+    .selectedOptions[0].dataset.note||"";
 
-async function api(action, params = {}){
-  const q = new URLSearchParams({ action, ...params }).toString();
-  const url = `${API_URL}?${q}`;
-  const res = await fetch(url, { method:"GET", mode:"cors", cache:"no-store", redirect:"follow" });
-  if (!res.ok) throw new Error("HTTP " + res.status);
-  return await res.json();
+  const r = await api({action:"signup",name,dateText:date,noteText:note});
+  if(!r.ok) return msg(r.error,"err");
+  msg("Sikeres jelentkezés","ok");
+  load();
 }
 
-async function loadData(){
-  setMsg("");
-  try {
-    const data = await api("getData");
-    if (!data.ok) throw new Error(data.error || "API hiba");
-    state.trainings = Array.isArray(data.trainings) ? data.trainings : [];
-    state.signups   = Array.isArray(data.signups)   ? data.signups   : [];
-    renderDropdown();
-    renderSignups();
-  } catch (err) {
-    console.error(err);
-    setMsg(err.message || "Hiba az adatok betöltésekor.", "err");
-  }
+async function del(){
+  const name = document.getElementById("name").value.trim();
+  if(!name) return msg("Add meg a neved","err");
+  const date = document.getElementById("dates").value;
+  const r = await api({action:"delete",name,dateText:date});
+  if(!r.ok) return msg(r.error,"err");
+  msg("Törölve","ok");
+  load();
 }
 
-function renderDropdown(){
-  els.sel.innerHTML = `<option value="">-- Válassz időpontot --</option>`;
-  const list = state.trainings.slice(0, MAX_TRAININGS);
-  for (const t of list){
-    const opt = document.createElement("option");
-    opt.value = t.dateText;
-    opt.textContent = t.dateText;
-    opt.dataset.note = t.noteText || "";
-    els.sel.appendChild(opt);
-  }
-  updateNote();
+function renderList(){
+  const d = document.getElementById("list");
+  d.innerHTML="";
+  const map={};
+  DATA.signups.forEach(s=>{
+    map[s.dateText]=map[s.dateText]||[];
+    map[s.dateText].push(s.name);
+  });
+  Object.keys(map).forEach(k=>{
+    d.innerHTML += `<b>${k}</b><ul>` +
+      map[k].map(n=>`<li>${n}</li>`).join("") +
+      "</ul>";
+  });
 }
 
-function updateNote(){
-  const dateText = normalize(els.sel.value);
-  if (!dateText){ els.note.textContent = "Megjegyzés: —"; return; }
-  const opt = els.sel.selectedOptions[0];
-  const noteText = normalize(opt?.dataset?.note || "");
-  els.note.textContent = noteText ? `Megjegyzés: ${noteText}` : "Megjegyzés: —";
-  if (isMeccsnap(noteText)) setMsg("Meccsnap: edzés nincs, csak szurkolás! :)", "warn");
-  else if (els.msg.classList.contains("warn")) setMsg("");
+function msg(t,c){
+  const m=document.getElementById("msg");
+  m.textContent=t;
+  m.className="msg "+c;
 }
 
-function renderSignups(){
-  const root = els.signupsRoot;
-  root.innerHTML = "";
-  const visibleDates = new Set(state.trainings.slice(0, MAX_TRAININGS).map(t => t.dateText));
-  const map = new Map();
-  for (const s of state.signups){
-    const key = normalize(s.dateText);
-    if (!visibleDates.has(key)) continue;
-    if (!map.has(key)) map.set(key, []);
-    map.get(key).push(s);
-  }
-  const dates = Array.from(map.keys());
-  if (dates.length === 0){
-    const p = document.createElement("div");
-    p.style.color = "var(--muted)";
-    p.textContent = "Még nincs jelentkező (vagy nincs betöltött edzésnap).";
-    root.appendChild(p);
-    return;
-  }
-  for (const dateText of dates){
-    const items = map.get(dateText) || [];
-    const wrap = document.createElement("div");
-    wrap.className = "group";
-    const header = document.createElement("div");
-    header.className = "dateHeader";
-    header.textContent = dateText;
-    const tr = state.trainings.find(t => t.dateText === dateText);
-    if (tr && tr.noteText){
-      const tag = document.createElement("span");
-      tag.className = "tag";
-      tag.textContent = tr.noteText;
-      header.appendChild(tag);
-    }
-    const ul = document.createElement("ul");
-    for (const s of items){
-      const li = document.createElement("li");
-      li.textContent = s.name;
-      ul.appendChild(li);
-    }
-    wrap.appendChild(header);
-    wrap.appendChild(ul);
-    root.appendChild(wrap);
-  }
-}
-
-async function onSignup(){
-  setMsg("");
-  const name = normalize(els.name.value);
-  const dateText = normalize(els.sel.value);
-  if (!name) return setMsg("Add meg a neved.", "err");
-  if (!dateText) return setMsg("Válassz időpontot.", "err");
-  const opt = els.sel.selectedOptions[0];
-  const noteText = normalize(opt?.dataset?.note || "");
-  if (isMeccsnap(noteText)) return setMsg("Meccsnap miatt edzés nem, de a szurkolás lehetséges! :)", "err");
-
-  try {
-    const res = await api("signup", { name, dateText, noteText });
-    if (!res.ok) return setMsg(res.error || "Nem sikerült a jelentkezés.", "err");
-    setMsg("Sikeres jelentkezés!", "ok");
-    await loadData();
-  } catch (err) {
-    console.error(err);
-    setMsg(err.message || "Hiba jelentkezés közben.", "err");
-  }
-}
-
-async function onDelete(){
-  setMsg("");
-  const name = normalize(els.name.value);
-  if (!name) return setMsg("Törléshez add meg a neved.", "err");
-  const dateText = normalize(els.sel.value);
-  try {
-    const res = await api("delete", { name, dateText });
-    if (!res.ok) return setMsg(res.error || "Nem sikerült a törlés.", "err");
-    setMsg(`Törölve: ${res.deleted || 1} db`, "ok");
-    await loadData();
-  } catch (err) {
-    console.error(err);
-    setMsg(err.message || "Hiba törlés közben.", "err");
-  }
-}
-
-els.sel.addEventListener("change", updateNote);
-els.signupBtn.addEventListener("click", onSignup);
-els.deleteBtn.addEventListener("click", onDelete);
-document.addEventListener("DOMContentLoaded", loadData);
+load();
 </script>
 </body>
 </html>
