@@ -23,45 +23,38 @@
     }
     h1{ margin:0 0 6px; font-size:34px; letter-spacing:-.5px; }
     .sub{ margin:0 0 18px; color:var(--muted); font-size:18px; }
-    label{ display:block; margin:16px 0 8px; font-weight:800; font-size:20px; }
+    label{ display:block; margin:16px 0 8px; font-weight:900; font-size:20px; }
     input,select{
       width:100%; padding:14px; border-radius:14px; border:1px solid var(--border);
       font-size:18px; outline:none; background:#fff; box-sizing:border-box;
     }
-    input:focus,select:focus{ border-color:#c7d2fe; }
     .btn{
       width:100%; border:none; border-radius:16px; padding:16px 14px;
-      font-size:22px; font-weight:900; cursor:pointer; margin-top:14px;
-      color:#fff; transition:transform .05s ease-in-out;
+      font-size:22px; font-weight:950; cursor:pointer; margin-top:14px;
+      color:#fff;
     }
-    .btn:active{ transform:translateY(1px); }
     .btnPrimary{ background:linear-gradient(90deg,var(--btn1),var(--btn2)); }
     .btnGray{ background:var(--btnGray); }
-
     .noteBox{
       margin-top:10px; padding:12px; border:1px dashed var(--border);
-      border-radius:14px; color:var(--muted); font-size:16px; line-height:1.35;
+      border-radius:14px; color:var(--muted); font-size:16px;
       min-height:44px; display:flex; align-items:center;
     }
-
     .msg{ margin-top:12px; font-weight:900; font-size:18px; }
     .msg.err{ color:var(--danger); }
     .msg.ok{ color:var(--ok); }
     .msg.warn{ color:var(--warn); }
-
     .sectionTitle{ margin:22px 0 8px; font-size:28px; font-weight:950; }
     .group{ border-top:1px solid var(--border); padding-top:10px; margin-top:10px; }
     .dateHeader{ font-weight:950; font-size:18px; margin:8px 0 6px; }
     .tag{
       display:inline-block; padding:4px 10px; border-radius:999px;
       border:1px solid var(--border); color:var(--muted); font-size:13px;
-      margin-left:8px; vertical-align:middle;
+      margin-left:8px;
     }
     ul{ margin:0 0 6px 18px; }
     li{ margin:4px 0; }
     .smallHelp{ margin-top:6px; font-size:14px; color:var(--muted); }
-    .tiny{ font-size:12px; color:var(--muted); margin-top:10px; }
-    code{ background:#f3f4f6; padding:2px 6px; border-radius:8px; }
   </style>
 </head>
 <body>
@@ -70,7 +63,7 @@
     <p class="sub">(Tagoknak NEM kell regisztrálni)</p>
 
     <label for="nameInput">Írd be a neved...</label>
-    <input id="nameInput" type="text" placeholder="Pl. Csóri Pingpongos" autocomplete="name" />
+    <input id="nameInput" type="text" placeholder="Pl. Csóri Pingpongos" />
 
     <label for="trainingSelect">Válassz időpontot</label>
     <select id="trainingSelect">
@@ -81,37 +74,18 @@
 
     <button id="signupBtn" class="btn btnPrimary">Jelentkezem</button>
     <button id="deleteBtn" class="btn btnGray">Jelentkezésem törlése</button>
-
-    <div class="smallHelp">
-      Törlés: név alapján (és ha kiválasztasz időpontot, akkor csak arra a napra).
-    </div>
+    <div class="smallHelp">Törlés: név alapján (és ha kiválasztasz időpontot, akkor csak arra a napra).</div>
 
     <div id="msg" class="msg"></div>
 
     <div class="sectionTitle">Jelentkezők edzésnaponként</div>
     <div id="signupsRoot"></div>
-
-    <div class="tiny">
-      Ha “Failed to fetch / ERR_FAILED” hiba van, az szinte mindig böngésző-bővítmény (AdBlock/Privacy/Volume Booster).
-    </div>
   </div>
 
 <script>
-/** =========================
- *  0) BEÁLLÍTÁS
- *  ========================= */
-const API_URL =
-  "https://script.google.com/macros/s/AKfycbwFc8TTWUsRJg0sb1dPcwSPix84jCnxoTwkFkv4EuJK--ZS6MQHTv4-g_ShAv2Shtg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwFc8TTWUsRJg0sb1dPcwSPix84jCnxoTwkFkv4EuJK--ZS6MQHTv4-g_ShAv2Shtg/exec";
+const MAX_TRAININGS = 5;
 
-// csak az aktuális 5 edzésnap
-const MAX_TRAININGS_IN_DROPDOWN = 5;
-
-// mennyi ideig próbálkozzon (ms)
-const FETCH_TIMEOUT_MS = 12000;
-
-/** =========================
- *  1) ELEMEK / ÁLLAPOT
- *  ========================= */
 const els = {
   name: document.getElementById("nameInput"),
   sel: document.getElementById("trainingSelect"),
@@ -122,14 +96,8 @@ const els = {
   signupsRoot: document.getElementById("signupsRoot"),
 };
 
-let state = {
-  trainings: [], // [{dateText, noteText}]
-  signups:   [], // [{ts,name,dateText,noteText}]
-};
+let state = { trainings: [], signups: [] };
 
-/** =========================
- *  2) SEGÉDEK
- *  ========================= */
 function normalize(s){ return String(s || "").trim(); }
 
 function setMsg(text, type=""){
@@ -141,28 +109,9 @@ function isMeccsnap(noteText){
   return normalize(noteText).toLowerCase().includes("meccsnap");
 }
 
-function buildUrl(action, params = {}){
-  const q = new URLSearchParams({ action, ...params }).toString();
-  return `${API_URL}?${q}`;
-}
-
-function withTimeout(promise, ms){
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), ms);
-  return {
-    signal: ctrl.signal,
-    done: promise.finally(() => clearTimeout(t))
-  };
-}
-
-/** =========================
- *  3) API HÍVÁS (GET, redirect follow)
- *  ========================= */
 async function api(action, params = {}){
-  const url = buildUrl(action, params);
-
-  // timeout + abort
-  const { signal, done } = withTimeout(Promise.resolve(), FETCH_TIMEOUT_MS);
+  const q = new URLSearchParams({ action, ...params }).toString();
+  const url = `${API_URL}?${q}`;
 
   try {
     const res = await fetch(url, {
@@ -171,70 +120,42 @@ async function api(action, params = {}){
       redirect: "follow",
       cache: "no-store",
       referrerPolicy: "no-referrer",
-      signal
     });
 
-    if (!res.ok){
-      const txt = await res.text().catch(()=> "");
-      throw new Error(`HTTP ${res.status}: ${txt.slice(0,200)}`);
-    }
-
-    // Apps Script JSON
+    if (!res.ok) throw new Error("HTTP hiba: " + res.status);
     const data = await res.json();
     return data;
 
   } catch (err) {
-    // Tipikus blokkolás / bővítmény / corporate proxy
-    const msg = (err && err.message) ? err.message : String(err);
-
-    // Abort (timeout)
-    if (err && err.name === "AbortError") {
-      throw new Error("Időtúllépés: a kérés nem futott le (12 mp).");
-    }
-
-    // Failed to fetch / ERR_FAILED = blokkolás vagy hálózati tiltás
+    const msg = err?.message || String(err);
     if (/Failed to fetch|ERR_FAILED/i.test(msg)) {
-      throw new Error(
-        "A böngésző BLOKKOLJA a Google Script hívást (AdBlock / Privacy / Volume Booster). " +
-        "Kapcsold ki a bővítményeket erre az oldalra, vagy próbáld inkognitóban bővítmények nélkül."
-      );
+      throw new Error("A böngésző blokkolja a Google Script hívást (AdBlock/Privacy/Volume Booster). Kapcsold ki erre az oldalra.");
     }
-
     throw err;
-  } finally {
-    await done.catch(()=>{});
   }
 }
 
-/** =========================
- *  4) BETÖLTÉS + RENDER
- *  ========================= */
 async function loadData(){
   setMsg("");
-
   try {
     const data = await api("getData");
-
-    if (!data || data.ok !== true){
-      throw new Error(data?.error || "API hiba: nincs ok:true");
-    }
+    if (!data.ok) throw new Error(data.error || "API hiba");
 
     state.trainings = Array.isArray(data.trainings) ? data.trainings : [];
-    state.signups   = Array.isArray(data.signups)   ? data.signups   : [];
+    state.signups = Array.isArray(data.signups) ? data.signups : [];
 
-    renderTrainingsDropdown();
-    renderSignupsGrouped();
+    renderDropdown();
+    renderSignups();
 
   } catch (err) {
     console.error(err);
-    setMsg(err.message ? err.message : "Hiba az adatok betöltésekor.", "err");
+    setMsg(err.message || "Hiba az adatok betöltésekor.", "err");
   }
 }
 
-function renderTrainingsDropdown(){
+function renderDropdown(){
   els.sel.innerHTML = `<option value="">-- Válassz időpontot --</option>`;
-
-  const list = state.trainings.slice(0, MAX_TRAININGS_IN_DROPDOWN);
+  const list = state.trainings.slice(0, MAX_TRAININGS);
 
   for (const t of list){
     const opt = document.createElement("option");
@@ -243,13 +164,12 @@ function renderTrainingsDropdown(){
     opt.dataset.note = t.noteText || "";
     els.sel.appendChild(opt);
   }
-
-  updateNoteBox();
+  updateNote();
 }
 
-function updateNoteBox(){
-  const selected = els.sel.value;
-  if (!selected){
+function updateNote(){
+  const dateText = normalize(els.sel.value);
+  if (!dateText){
     els.note.textContent = "Megjegyzés: —";
     return;
   }
@@ -257,21 +177,21 @@ function updateNoteBox(){
   const noteText = normalize(opt?.dataset?.note || "");
   els.note.textContent = noteText ? `Megjegyzés: ${noteText}` : "Megjegyzés: —";
 
-  // Meccsnap vizuális figyelmeztetés
-  if (isMeccsnap(noteText)){
-    setMsg("Meccsnap: edzésre nem lehet jelentkezni, csak szurkolni! :)", "warn");
+  if (isMeccsnap(noteText)) {
+    setMsg("Meccsnap: edzés nincs, csak szurkolás! :)", "warn");
+  } else {
+    // ha nem meccsnap, ne hagyjuk ott a warn üzenetet
+    if (els.msg.classList.contains("warn")) setMsg("");
   }
 }
 
-function renderSignupsGrouped(){
+function renderSignups(){
   const root = els.signupsRoot;
   root.innerHTML = "";
 
-  const visibleDates = new Set(
-    state.trainings.slice(0, MAX_TRAININGS_IN_DROPDOWN).map(t => t.dateText)
-  );
-
+  const visibleDates = new Set(state.trainings.slice(0, MAX_TRAININGS).map(t => t.dateText));
   const map = new Map();
+
   for (const s of state.signups){
     const key = normalize(s.dateText);
     if (!visibleDates.has(key)) continue;
@@ -319,12 +239,8 @@ function renderSignupsGrouped(){
   }
 }
 
-/** =========================
- *  5) AKCIÓK
- *  ========================= */
 async function onSignup(){
   setMsg("");
-
   const name = normalize(els.name.value);
   const dateText = normalize(els.sel.value);
 
@@ -339,4 +255,4 @@ async function onSignup(){
   }
 
   try {
-    const res = await api("sign
+    const res = await api("signu
