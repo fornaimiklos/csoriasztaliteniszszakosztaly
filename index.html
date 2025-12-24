@@ -1,226 +1,181 @@
-<!doctype html>
-<html lang="hu">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Edzés Jelentkezés</title>
-  <style>
-    :root{
-      --bg:#f0f2f5; --card:#fff; --text:#111827; --muted:#6b7280;
-      --danger:#dc2626; --ok:#16a34a; --warn:#b45309;
-      --btn1:#ff4d6d; --btn2:#ff7a00; --btnGray:#6b7280;
-      --border:#e5e7eb; --shadow:0 10px 30px rgba(0,0,0,.08);
-      --radius:18px;
+/*******************************
+ *  CSÓRI ASZTALITENISZ - WEBAPP
+ *  Google Apps Script (Code.gs)
+ *******************************/
+
+// =====================================================
+// 1) BEÁLLÍTÁSOK – CSAK EZT A 3 SORT ÁLLÍTOD
+// =====================================================
+
+// IDE ÍRD BE A SAJÁT GOOGLE SHEET ID-T (a /d/ és /edit között)
+// PÉLDA: "1AbCDefGhIJKlMnOPqRstUVwxYZ1234567890"
+const SHEET_ID = "IDE_ÍRD_BE_A_SAJÁT_SHEET_ID-T";
+
+// Edzésnapok lap neve: nálad a képen "sheet1" volt
+const TRAININGS_SHEET_NAME = "sheet1";
+
+// Jelentkezések lap neve: nálad "Jelentkezők" volt
+const SIGNUPS_SHEET_NAME = "Jelentkezők";
+
+// =====================================================
+// 2) SEGÉDFÜGGVÉNYEK
+// =====================================================
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function normalize_(s) { return String(s || "").trim(); }
+
+function isHeaderLike_(value) {
+  const v = String(value || "").toLowerCase();
+  return v.includes("dátum") || v.includes("datum") || v.includes("idő") || v.includes("ido");
+}
+
+function getOrCreateSignupsSheet_(ss) {
+  let sh = ss.getSheetByName(SIGNUPS_SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(SIGNUPS_SHEET_NAME);
+    sh.appendRow(["Timestamp", "Név", "Edzésnap", "Megjegyzés"]);
+  } else {
+    if (sh.getLastRow() === 0) {
+      sh.appendRow(["Timestamp", "Név", "Edzésnap", "Megjegyzés"]);
     }
-    body{margin:0;padding:20px;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);display:flex;justify-content:center;align-items:flex-start;min-height:100vh;}
-    .container{width:420px;max-width:92vw;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;}
-    h1{margin:0 0 6px;font-size:34px;letter-spacing:-.5px;}
-    .sub{margin:0 0 18px;color:var(--muted);font-size:18px;}
-    label{display:block;margin:16px 0 8px;font-weight:950;font-size:20px;}
-    input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--border);font-size:18px;outline:none;background:#fff;box-sizing:border-box;}
-    .btn{width:100%;border:none;border-radius:16px;padding:16px 14px;font-size:22px;font-weight:950;cursor:pointer;margin-top:14px;color:#fff;}
-    .btnPrimary{background:linear-gradient(90deg,var(--btn1),var(--btn2));}
-    .btnGray{background:var(--btnGray);}
-    .noteBox{margin-top:10px;padding:12px;border:1px dashed var(--border);border-radius:14px;color:var(--muted);font-size:16px;min-height:44px;display:flex;align-items:center;}
-    .msg{margin-top:12px;font-weight:950;font-size:18px;}
-    .msg.err{color:var(--danger);}
-    .msg.ok{color:var(--ok);}
-    .msg.warn{color:var(--warn);}
-    .sectionTitle{margin:22px 0 8px;font-size:28px;font-weight:950;}
-    .group{border-top:1px solid var(--border);padding-top:10px;margin-top:10px;}
-    .dateHeader{font-weight:950;font-size:18px;margin:8px 0 6px;}
-    .tag{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--border);color:var(--muted);font-size:13px;margin-left:8px;}
-    ul{margin:0 0 6px 18px;}
-    li{margin:4px 0;}
-    .smallHelp{margin-top:6px;font-size:14px;color:var(--muted);}
-    .tiny{font-size:12px;color:var(--muted);margin-top:10px;}
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Edzés Jelentkezés</h1>
-    <p class="sub">(Tagoknak NEM kell regisztrálni)</p>
-
-    <label for="nameInput">Írd be a neved...</label>
-    <input id="nameInput" type="text" placeholder="Pl. Csóri Pingpongos" autocomplete="name" />
-
-    <label for="trainingSelect">Válassz időpontot</label>
-    <select id="trainingSelect">
-      <option value="">-- Válassz időpontot --</option>
-    </select>
-
-    <div id="noteBox" class="noteBox">Megjegyzés: —</div>
-
-    <button id="signupBtn" class="btn btnPrimary">Jelentkezem</button>
-    <button id="deleteBtn" class="btn btnGray">Jelentkezésem törlése</button>
-
-    <div class="smallHelp">Törlés: név alapján (és ha kiválasztasz időpontot, akkor csak arra a napra).</div>
-
-    <div id="msg" class="msg"></div>
-
-    <div class="sectionTitle">Jelentkezők edzésnaponként</div>
-    <div id="signupsRoot"></div>
-
-    <div class="tiny">Ha “Failed to fetch / ERR_FAILED” hiba van: kapcsold ki az AdBlock/Privacy/Volume Booster bővítményt erre az oldalra.</div>
-  </div>
-
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzHSLSuBMvdNyebi0yH_FSZd1n2HCTCBi0URUnRTjJpwCL_hCJJdWkacV5neQTtHVhC/exec";
-const MAX_TRAININGS = 5;
-
-const els = {
-  name: document.getElementById("nameInput"),
-  sel: document.getElementById("trainingSelect"),
-  note: document.getElementById("noteBox"),
-  msg: document.getElementById("msg"),
-  signupBtn: document.getElementById("signupBtn"),
-  deleteBtn: document.getElementById("deleteBtn"),
-  signupsRoot: document.getElementById("signupsRoot"),
-};
-
-let state = { trainings: [], signups: [] };
-
-function normalize(s){ return String(s || "").trim(); }
-function setMsg(text, type=""){
-  els.msg.textContent = text || "";
-  els.msg.className = "msg" + (type ? " " + type : "");
-}
-function isMeccsnap(noteText){
-  return normalize(noteText).toLowerCase().includes("meccsnap");
+  }
+  return sh;
 }
 
-async function api(action, params = {}){
-  const q = new URLSearchParams({ action, ...params }).toString();
-  const url = `${API_URL}?${q}`;
-  const res = await fetch(url, { method:"GET", mode:"cors", cache:"no-store", redirect:"follow" });
-  if (!res.ok) throw new Error("HTTP " + res.status);
-  return await res.json();
-}
-
-async function loadData(){
-  setMsg("");
+// =====================================================
+// 3) WEBAPP BELÉPÉSI PONT
+// =====================================================
+function doGet(e) {
   try {
-    const data = await api("getData");
-    if (!data.ok) throw new Error(data.error || "API hiba");
-    state.trainings = Array.isArray(data.trainings) ? data.trainings : [];
-    state.signups   = Array.isArray(data.signups)   ? data.signups   : [];
-    renderDropdown();
-    renderSignups();
+    const action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "getData";
+
+    if (action === "getData") return handleGetData_();
+    if (action === "signup")  return handleSignup_(e);
+    if (action === "delete")  return handleDelete_(e);
+
+    return json_({ ok: false, error: "Ismeretlen művelet: " + action });
   } catch (err) {
-    console.error(err);
-    setMsg(err.message || "Hiba az adatok betöltésekor.", "err");
+    return json_({ ok: false, error: String(err && err.stack ? err.stack : err) });
   }
 }
 
-function renderDropdown(){
-  els.sel.innerHTML = `<option value="">-- Válassz időpontot --</option>`;
-  const list = state.trainings.slice(0, MAX_TRAININGS);
-  for (const t of list){
-    const opt = document.createElement("option");
-    opt.value = t.dateText;
-    opt.textContent = t.dateText;
-    opt.dataset.note = t.noteText || "";
-    els.sel.appendChild(opt);
+// =====================================================
+// 4) API: getData
+// =====================================================
+function handleGetData_() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+
+  const trainingsSheet = ss.getSheetByName(TRAININGS_SHEET_NAME);
+  if (!trainingsSheet) {
+    return json_({ ok: false, error: "Nincs '" + TRAININGS_SHEET_NAME + "' lap." });
   }
-  updateNote();
+
+  const signupsSheet = getOrCreateSignupsSheet_(ss);
+
+  // Edzésnapok (A+B)
+  const trValues = trainingsSheet.getDataRange().getValues();
+  const trainings = [];
+
+  for (let i = 0; i < trValues.length; i++) {
+    const a = trValues[i][0];
+    const b = trValues[i][1];
+
+    if (!a) continue;
+    if (isHeaderLike_(a)) continue;
+
+    trainings.push({
+      dateText: normalize_(a),
+      noteText: b ? normalize_(b) : ""
+    });
+  }
+
+  // Jelentkezések
+  const suValues = signupsSheet.getDataRange().getValues();
+  const signups = [];
+
+  for (let i = 1; i < suValues.length; i++) {
+    const ts = suValues[i][0];
+    const name = suValues[i][1];
+    const dateText = suValues[i][2];
+    const noteText = suValues[i][3];
+
+    if (!name || !dateText) continue;
+
+    signups.push({
+      ts: ts ? String(ts) : "",
+      name: normalize_(name),
+      dateText: normalize_(dateText),
+      noteText: noteText ? normalize_(noteText) : ""
+    });
+  }
+
+  return json_({ ok: true, trainings, signups });
 }
 
-function updateNote(){
-  const dateText = normalize(els.sel.value);
-  if (!dateText){ els.note.textContent = "Megjegyzés: —"; return; }
-  const opt = els.sel.selectedOptions[0];
-  const noteText = normalize(opt?.dataset?.note || "");
-  els.note.textContent = noteText ? `Megjegyzés: ${noteText}` : "Megjegyzés: —";
-  if (isMeccsnap(noteText)) setMsg("Meccsnap: edzés nincs, csak szurkolás! :)", "warn");
-  else if (els.msg.classList.contains("warn")) setMsg("");
-}
+// =====================================================
+// 5) API: signup
+// =====================================================
+function handleSignup_(e) {
+  const name = normalize_(e.parameter.name);
+  const dateText = normalize_(e.parameter.dateText);
+  const noteText = normalize_(e.parameter.noteText);
 
-function renderSignups(){
-  const root = els.signupsRoot;
-  root.innerHTML = "";
-  const visibleDates = new Set(state.trainings.slice(0, MAX_TRAININGS).map(t => t.dateText));
-  const map = new Map();
-  for (const s of state.signups){
-    const key = normalize(s.dateText);
-    if (!visibleDates.has(key)) continue;
-    if (!map.has(key)) map.set(key, []);
-    map.get(key).push(s);
+  if (!name) return json_({ ok: false, error: "Nincs név." });
+  if (!dateText) return json_({ ok: false, error: "Nincs kiválasztott időpont." });
+
+  // Meccsnap tiltás backend oldalon is
+  if (noteText.toLowerCase().includes("meccsnap")) {
+    return json_({ ok: false, error: "Meccsnap miatt edzés nem, de a szurkolás lehetséges! :)" });
   }
-  const dates = Array.from(map.keys());
-  if (dates.length === 0){
-    const p = document.createElement("div");
-    p.style.color = "var(--muted)";
-    p.textContent = "Még nincs jelentkező (vagy nincs betöltött edzésnap).";
-    root.appendChild(p);
-    return;
-  }
-  for (const dateText of dates){
-    const items = map.get(dateText) || [];
-    const wrap = document.createElement("div");
-    wrap.className = "group";
-    const header = document.createElement("div");
-    header.className = "dateHeader";
-    header.textContent = dateText;
-    const tr = state.trainings.find(t => t.dateText === dateText);
-    if (tr && tr.noteText){
-      const tag = document.createElement("span");
-      tag.className = "tag";
-      tag.textContent = tr.noteText;
-      header.appendChild(tag);
+
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const signupsSheet = getOrCreateSignupsSheet_(ss);
+
+  // Duplikáció védelem
+  const values = signupsSheet.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    const existingName = normalize_(values[i][1]).toLowerCase();
+    const existingDate = normalize_(values[i][2]);
+    if (existingName === name.toLowerCase() && existingDate === dateText) {
+      return json_({ ok: false, error: "Már jelentkeztél erre az edzésnapra." });
     }
-    const ul = document.createElement("ul");
-    for (const s of items){
-      const li = document.createElement("li");
-      li.textContent = s.name;
-      ul.appendChild(li);
+  }
+
+  signupsSheet.appendRow([new Date(), name, dateText, noteText]);
+  return json_({ ok: true });
+}
+
+// =====================================================
+// 6) API: delete
+// =====================================================
+function handleDelete_(e) {
+  const name = normalize_(e.parameter.name);
+  const dateText = normalize_(e.parameter.dateText); // opcionális
+
+  if (!name) return json_({ ok: false, error: "Add meg a nevet törléshez." });
+
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const signupsSheet = getOrCreateSignupsSheet_(ss);
+
+  const values = signupsSheet.getDataRange().getValues();
+  let deleted = 0;
+
+  for (let i = values.length - 1; i >= 1; i--) {
+    const rowName = normalize_(values[i][1]);
+    const rowDate = normalize_(values[i][2]);
+
+    const nameMatch = rowName.toLowerCase() === name.toLowerCase();
+    const dateMatch = !dateText || rowDate === dateText;
+
+    if (nameMatch && dateMatch) {
+      signupsSheet.deleteRow(i + 1);
+      deleted++;
     }
-    wrap.appendChild(header);
-    wrap.appendChild(ul);
-    root.appendChild(wrap);
   }
+
+  if (deleted === 0) return json_({ ok: false, error: "Nincs ilyen jelentkezés." });
+  return json_({ ok: true, deleted });
 }
-
-async function onSignup(){
-  setMsg("");
-  const name = normalize(els.name.value);
-  const dateText = normalize(els.sel.value);
-  if (!name) return setMsg("Add meg a neved.", "err");
-  if (!dateText) return setMsg("Válassz időpontot.", "err");
-  const opt = els.sel.selectedOptions[0];
-  const noteText = normalize(opt?.dataset?.note || "");
-  if (isMeccsnap(noteText)) return setMsg("Meccsnap miatt edzés nem, de a szurkolás lehetséges! :)", "err");
-
-  try {
-    const res = await api("signup", { name, dateText, noteText });
-    if (!res.ok) return setMsg(res.error || "Nem sikerült a jelentkezés.", "err");
-    setMsg("Sikeres jelentkezés!", "ok");
-    await loadData();
-  } catch (err) {
-    console.error(err);
-    setMsg(err.message || "Hiba jelentkezés közben.", "err");
-  }
-}
-
-async function onDelete(){
-  setMsg("");
-  const name = normalize(els.name.value);
-  if (!name) return setMsg("Törléshez add meg a neved.", "err");
-  const dateText = normalize(els.sel.value);
-  try {
-    const res = await api("delete", { name, dateText });
-    if (!res.ok) return setMsg(res.error || "Nem sikerült a törlés.", "err");
-    setMsg(`Törölve: ${res.deleted || 1} db`, "ok");
-    await loadData();
-  } catch (err) {
-    console.error(err);
-    setMsg(err.message || "Hiba törlés közben.", "err");
-  }
-}
-
-els.sel.addEventListener("change", updateNote);
-els.signupBtn.addEventListener("click", onSignup);
-els.deleteBtn.addEventListener("click", onDelete);
-document.addEventListener("DOMContentLoaded", loadData);
-</script>
-</body>
-</html>
