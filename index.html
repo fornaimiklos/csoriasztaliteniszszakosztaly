@@ -5,148 +5,63 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Edzés Jelentkezés</title>
   <style>
-    :root {
-      --bg: #f0f2f5;
-      --card: #ffffff;
-      --text: #111827;
-      --muted: #6b7280;
-      --danger: #dc2626;
-      --ok: #16a34a;
-      --btn1: #ff4d6d;
-      --btn2: #ff7a00;
-      --btnGray: #6b7280;
-      --border: #e5e7eb;
-      --shadow: 0 10px 30px rgba(0,0,0,.08);
-      --radius: 18px;
+    :root{
+      --bg:#f0f2f5; --card:#fff; --text:#111827; --muted:#6b7280;
+      --danger:#dc2626; --ok:#16a34a; --warn:#b45309;
+      --btn1:#ff4d6d; --btn2:#ff7a00; --btnGray:#6b7280;
+      --border:#e5e7eb; --shadow:0 10px 30px rgba(0,0,0,.08);
+      --radius:18px;
+    }
+    body{
+      margin:0; padding:20px; background:var(--bg);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--text);
+      display:flex; justify-content:center; align-items:flex-start; min-height:100vh;
+    }
+    .container{
+      width:420px; max-width:92vw; background:var(--card);
+      border-radius:var(--radius); box-shadow:var(--shadow); padding:22px;
+    }
+    h1{ margin:0 0 6px; font-size:34px; letter-spacing:-.5px; }
+    .sub{ margin:0 0 18px; color:var(--muted); font-size:18px; }
+    label{ display:block; margin:16px 0 8px; font-weight:800; font-size:20px; }
+    input,select{
+      width:100%; padding:14px; border-radius:14px; border:1px solid var(--border);
+      font-size:18px; outline:none; background:#fff; box-sizing:border-box;
+    }
+    input:focus,select:focus{ border-color:#c7d2fe; }
+    .btn{
+      width:100%; border:none; border-radius:16px; padding:16px 14px;
+      font-size:22px; font-weight:900; cursor:pointer; margin-top:14px;
+      color:#fff; transition:transform .05s ease-in-out;
+    }
+    .btn:active{ transform:translateY(1px); }
+    .btnPrimary{ background:linear-gradient(90deg,var(--btn1),var(--btn2)); }
+    .btnGray{ background:var(--btnGray); }
+
+    .noteBox{
+      margin-top:10px; padding:12px; border:1px dashed var(--border);
+      border-radius:14px; color:var(--muted); font-size:16px; line-height:1.35;
+      min-height:44px; display:flex; align-items:center;
     }
 
-    body {
-      margin: 0;
-      padding: 20px;
-      background: var(--bg);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      color: var(--text);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
+    .msg{ margin-top:12px; font-weight:900; font-size:18px; }
+    .msg.err{ color:var(--danger); }
+    .msg.ok{ color:var(--ok); }
+    .msg.warn{ color:var(--warn); }
+
+    .sectionTitle{ margin:22px 0 8px; font-size:28px; font-weight:950; }
+    .group{ border-top:1px solid var(--border); padding-top:10px; margin-top:10px; }
+    .dateHeader{ font-weight:950; font-size:18px; margin:8px 0 6px; }
+    .tag{
+      display:inline-block; padding:4px 10px; border-radius:999px;
+      border:1px solid var(--border); color:var(--muted); font-size:13px;
+      margin-left:8px; vertical-align:middle;
     }
-
-    .container {
-      width: 420px;
-      max-width: 92vw;
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 22px;
-    }
-
-    h1 {
-      margin: 0 0 6px;
-      font-size: 34px;
-      letter-spacing: -0.5px;
-    }
-
-    .sub {
-      margin: 0 0 18px;
-      color: var(--muted);
-      font-size: 18px;
-    }
-
-    label {
-      display:block;
-      margin: 16px 0 8px;
-      font-weight: 700;
-      font-size: 20px;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 14px 14px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      font-size: 18px;
-      outline: none;
-      background: #fff;
-      box-sizing: border-box;
-    }
-    input:focus, select:focus { border-color: #c7d2fe; }
-
-    .btn {
-      width: 100%;
-      border: none;
-      border-radius: 16px;
-      padding: 16px 14px;
-      font-size: 22px;
-      font-weight: 800;
-      cursor: pointer;
-      margin-top: 14px;
-      color: #fff;
-      transition: transform .05s ease-in-out;
-    }
-    .btn:active { transform: translateY(1px); }
-
-    .btnPrimary { background: linear-gradient(90deg, var(--btn1), var(--btn2)); }
-    .btnGray { background: var(--btnGray); }
-
-    .noteBox {
-      margin-top: 10px;
-      padding: 12px 12px;
-      border: 1px dashed var(--border);
-      border-radius: 14px;
-      color: var(--muted);
-      font-size: 16px;
-      line-height: 1.35;
-      min-height: 44px;
-      display:flex;
-      align-items:center;
-    }
-
-    .msg {
-      margin-top: 12px;
-      font-weight: 800;
-      font-size: 18px;
-    }
-    .msg.err { color: var(--danger); }
-    .msg.ok { color: var(--ok); }
-
-    .sectionTitle {
-      margin: 22px 0 8px;
-      font-size: 28px;
-      font-weight: 900;
-    }
-
-    .group {
-      border-top: 1px solid var(--border);
-      padding-top: 10px;
-      margin-top: 10px;
-    }
-
-    .dateHeader {
-      font-weight: 900;
-      font-size: 18px;
-      margin: 8px 0 6px;
-    }
-
-    .tag {
-      display:inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 13px;
-      margin-left: 8px;
-      vertical-align: middle;
-    }
-
-    ul { margin: 0 0 6px 18px; }
-    li { margin: 4px 0; }
-
-    .smallHelp {
-      margin-top: 6px;
-      font-size: 14px;
-      color: var(--muted);
-    }
+    ul{ margin:0 0 6px 18px; }
+    li{ margin:4px 0; }
+    .smallHelp{ margin-top:6px; font-size:14px; color:var(--muted); }
+    .tiny{ font-size:12px; color:var(--muted); margin-top:10px; }
+    code{ background:#f3f4f6; padding:2px 6px; border-radius:8px; }
   </style>
 </head>
 <body>
@@ -155,7 +70,7 @@
     <p class="sub">(Tagoknak NEM kell regisztrálni)</p>
 
     <label for="nameInput">Írd be a neved...</label>
-    <input id="nameInput" type="text" placeholder="Pl. Csóri Pingpongos" />
+    <input id="nameInput" type="text" placeholder="Pl. Csóri Pingpongos" autocomplete="name" />
 
     <label for="trainingSelect">Válassz időpontot</label>
     <select id="trainingSelect">
@@ -165,25 +80,38 @@
     <div id="noteBox" class="noteBox">Megjegyzés: —</div>
 
     <button id="signupBtn" class="btn btnPrimary">Jelentkezem</button>
-
     <button id="deleteBtn" class="btn btnGray">Jelentkezésem törlése</button>
-    <div class="smallHelp">Törlés: név alapján (és ha kiválasztasz időpontot, akkor csak arra a napra).</div>
+
+    <div class="smallHelp">
+      Törlés: név alapján (és ha kiválasztasz időpontot, akkor csak arra a napra).
+    </div>
 
     <div id="msg" class="msg"></div>
 
     <div class="sectionTitle">Jelentkezők edzésnaponként</div>
     <div id="signupsRoot"></div>
+
+    <div class="tiny">
+      Ha “Failed to fetch / ERR_FAILED” hiba van, az szinte mindig böngésző-bővítmény (AdBlock/Privacy/Volume Booster).
+    </div>
   </div>
 
 <script>
 /** =========================
- *  BEÁLLÍTÁS
+ *  0) BEÁLLÍTÁS
  *  ========================= */
-const API_URL = "https://script.google.com/macros/s/AKfycbwFc8TTWUsRJg0sb1dPcwSPix84jCnxoTwkFkv4EuJK--ZS6MQHTv4-g_ShAv2Shtg/exec";
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbwFc8TTWUsRJg0sb1dPcwSPix84jCnxoTwkFkv4EuJK--ZS6MQHTv4-g_ShAv2Shtg/exec";
 
-// Ha csak az aktuális 5 edzésnap kell:
+// csak az aktuális 5 edzésnap
 const MAX_TRAININGS_IN_DROPDOWN = 5;
 
+// mennyi ideig próbálkozzon (ms)
+const FETCH_TIMEOUT_MS = 12000;
+
+/** =========================
+ *  1) ELEMEK / ÁLLAPOT
+ *  ========================= */
 const els = {
   name: document.getElementById("nameInput"),
   sel: document.getElementById("trainingSelect"),
@@ -196,70 +124,119 @@ const els = {
 
 let state = {
   trainings: [], // [{dateText, noteText}]
-  signups: [],   // [{ts,name,dateText,noteText}]
+  signups:   [], // [{ts,name,dateText,noteText}]
 };
 
 /** =========================
- *  KIS SEGÉD
+ *  2) SEGÉDEK
  *  ========================= */
-function setMsg(text, type = "") {
+function normalize(s){ return String(s || "").trim(); }
+
+function setMsg(text, type=""){
   els.msg.textContent = text || "";
   els.msg.className = "msg" + (type ? " " + type : "");
 }
-
-function normalize(s){ return String(s || "").trim(); }
 
 function isMeccsnap(noteText){
   return normalize(noteText).toLowerCase().includes("meccsnap");
 }
 
-/** GET API hívás (NINCS POST) */
-async function api(action, params = {}) {
+function buildUrl(action, params = {}){
   const q = new URLSearchParams({ action, ...params }).toString();
-  const url = `${API_URL}?${q}`;
+  return `${API_URL}?${q}`;
+}
 
-  const res = await fetch(url, { method: "GET", cache: "no-store" });
-  if (!res.ok) {
-    const txt = await res.text().catch(()=> "");
-    throw new Error(`HTTP ${res.status} - ${txt.slice(0,200)}`);
-  }
-
-  const data = await res.json();
-  return data;
+function withTimeout(promise, ms){
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return {
+    signal: ctrl.signal,
+    done: promise.finally(() => clearTimeout(t))
+  };
 }
 
 /** =========================
- *  BETÖLTÉS + RENDER
+ *  3) API HÍVÁS (GET, redirect follow)
  *  ========================= */
-async function loadData() {
+async function api(action, params = {}){
+  const url = buildUrl(action, params);
+
+  // timeout + abort
+  const { signal, done } = withTimeout(Promise.resolve(), FETCH_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      mode: "cors",
+      redirect: "follow",
+      cache: "no-store",
+      referrerPolicy: "no-referrer",
+      signal
+    });
+
+    if (!res.ok){
+      const txt = await res.text().catch(()=> "");
+      throw new Error(`HTTP ${res.status}: ${txt.slice(0,200)}`);
+    }
+
+    // Apps Script JSON
+    const data = await res.json();
+    return data;
+
+  } catch (err) {
+    // Tipikus blokkolás / bővítmény / corporate proxy
+    const msg = (err && err.message) ? err.message : String(err);
+
+    // Abort (timeout)
+    if (err && err.name === "AbortError") {
+      throw new Error("Időtúllépés: a kérés nem futott le (12 mp).");
+    }
+
+    // Failed to fetch / ERR_FAILED = blokkolás vagy hálózati tiltás
+    if (/Failed to fetch|ERR_FAILED/i.test(msg)) {
+      throw new Error(
+        "A böngésző BLOKKOLJA a Google Script hívást (AdBlock / Privacy / Volume Booster). " +
+        "Kapcsold ki a bővítményeket erre az oldalra, vagy próbáld inkognitóban bővítmények nélkül."
+      );
+    }
+
+    throw err;
+  } finally {
+    await done.catch(()=>{});
+  }
+}
+
+/** =========================
+ *  4) BETÖLTÉS + RENDER
+ *  ========================= */
+async function loadData(){
   setMsg("");
 
   try {
     const data = await api("getData");
 
-    if (!data || data.ok !== true) {
-      throw new Error(data?.error || "Ismeretlen API hiba");
+    if (!data || data.ok !== true){
+      throw new Error(data?.error || "API hiba: nincs ok:true");
     }
 
     state.trainings = Array.isArray(data.trainings) ? data.trainings : [];
-    state.signups = Array.isArray(data.signups) ? data.signups : [];
+    state.signups   = Array.isArray(data.signups)   ? data.signups   : [];
 
     renderTrainingsDropdown();
     renderSignupsGrouped();
 
   } catch (err) {
     console.error(err);
-    setMsg("Hiba az adatok betöltésekor.", "err");
+    setMsg(err.message ? err.message : "Hiba az adatok betöltésekor.", "err");
   }
 }
 
-function renderTrainingsDropdown() {
-  // reset
+function renderTrainingsDropdown(){
   els.sel.innerHTML = `<option value="">-- Válassz időpontot --</option>`;
 
   const list = state.trainings.slice(0, MAX_TRAININGS_IN_DROPDOWN);
 
-  for (const t of list) {
+  for (const t of list){
     const opt = document.createElement("option");
     opt.value = t.dateText;
     opt.textContent = t.dateText;
@@ -270,35 +247,40 @@ function renderTrainingsDropdown() {
   updateNoteBox();
 }
 
-function updateNoteBox() {
+function updateNoteBox(){
   const selected = els.sel.value;
-  if (!selected) {
+  if (!selected){
     els.note.textContent = "Megjegyzés: —";
     return;
   }
   const opt = els.sel.selectedOptions[0];
-  const noteText = opt?.dataset?.note || "";
+  const noteText = normalize(opt?.dataset?.note || "");
   els.note.textContent = noteText ? `Megjegyzés: ${noteText}` : "Megjegyzés: —";
+
+  // Meccsnap vizuális figyelmeztetés
+  if (isMeccsnap(noteText)){
+    setMsg("Meccsnap: edzésre nem lehet jelentkezni, csak szurkolni! :)", "warn");
+  }
 }
 
-function renderSignupsGrouped() {
+function renderSignupsGrouped(){
   const root = els.signupsRoot;
   root.innerHTML = "";
 
-  // csoportosítás dateText szerint
+  const visibleDates = new Set(
+    state.trainings.slice(0, MAX_TRAININGS_IN_DROPDOWN).map(t => t.dateText)
+  );
+
   const map = new Map();
-  for (const s of state.signups) {
+  for (const s of state.signups){
     const key = normalize(s.dateText);
+    if (!visibleDates.has(key)) continue;
     if (!map.has(key)) map.set(key, []);
     map.get(key).push(s);
   }
 
-  // csak az aktuális 5 edzésnapot listázzuk (ugyanaz, mint a dropdown)
-  const visibleDates = new Set(state.trainings.slice(0, MAX_TRAININGS_IN_DROPDOWN).map(t => t.dateText));
-
-  const dates = Array.from(map.keys()).filter(d => visibleDates.has(d));
-
-  if (dates.length === 0) {
+  const dates = Array.from(map.keys());
+  if (dates.length === 0){
     const p = document.createElement("div");
     p.style.color = "var(--muted)";
     p.textContent = "Még nincs jelentkező (vagy nincs betöltött edzésnap).";
@@ -306,7 +288,7 @@ function renderSignupsGrouped() {
     return;
   }
 
-  for (const dateText of dates) {
+  for (const dateText of dates){
     const items = map.get(dateText) || [];
 
     const wrap = document.createElement("div");
@@ -316,9 +298,8 @@ function renderSignupsGrouped() {
     header.className = "dateHeader";
     header.textContent = dateText;
 
-    // ha van hozzá megjegyzés, adjuk hozzá tagként
     const tr = state.trainings.find(t => t.dateText === dateText);
-    if (tr && tr.noteText) {
+    if (tr && tr.noteText){
       const tag = document.createElement("span");
       tag.className = "tag";
       tag.textContent = tr.noteText;
@@ -326,7 +307,7 @@ function renderSignupsGrouped() {
     }
 
     const ul = document.createElement("ul");
-    for (const s of items) {
+    for (const s of items){
       const li = document.createElement("li");
       li.textContent = s.name;
       ul.appendChild(li);
@@ -339,9 +320,9 @@ function renderSignupsGrouped() {
 }
 
 /** =========================
- *  AKCIÓK
+ *  5) AKCIÓK
  *  ========================= */
-async function onSignup() {
+async function onSignup(){
   setMsg("");
 
   const name = normalize(els.name.value);
@@ -353,60 +334,9 @@ async function onSignup() {
   const opt = els.sel.selectedOptions[0];
   const noteText = normalize(opt?.dataset?.note || "");
 
-  if (isMeccsnap(noteText)) {
+  if (isMeccsnap(noteText)){
     return setMsg("Meccsnap miatt edzés nem, de a szurkolás lehetséges! :)", "err");
   }
 
   try {
-    const res = await api("signup", { name, dateText, noteText });
-
-    if (!res.ok) return setMsg(res.error || "Nem sikerült a jelentkezés.", "err");
-
-    setMsg("Sikeres jelentkezés!", "ok");
-    await loadData();
-
-  } catch (err) {
-    console.error(err);
-    setMsg("Hiba jelentkezés közben.", "err");
-  }
-}
-
-async function onDelete() {
-  setMsg("");
-
-  const name = normalize(els.name.value);
-  if (!name) return setMsg("Törléshez add meg a neved.", "err");
-
-  // Ha kiválasztott időpont van, akkor csak arra törlünk.
-  // Ha nincs, akkor név alapján mindet.
-  const dateText = normalize(els.sel.value);
-
-  try {
-    const res = await api("delete", { name, dateText });
-
-    if (!res.ok) return setMsg(res.error || "Nem sikerült a törlés.", "err");
-
-    setMsg(`Törölve: ${res.deleted || 1} db`, "ok");
-    await loadData();
-
-  } catch (err) {
-    console.error(err);
-    setMsg("Hiba törlés közben.", "err");
-  }
-}
-
-/** =========================
- *  ESEMÉNYEK
- *  ========================= */
-els.sel.addEventListener("change", () => {
-  updateNoteBox();
-  setMsg("");
-});
-
-els.signupBtn.addEventListener("click", onSignup);
-els.deleteBtn.addEventListener("click", onDelete);
-
-document.addEventListener("DOMContentLoaded", loadData);
-</script>
-</body>
-</html>
+    const res = await api("sign
