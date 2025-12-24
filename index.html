@@ -23,7 +23,7 @@
     }
     h1{ margin:0 0 6px; font-size:34px; letter-spacing:-.5px; }
     .sub{ margin:0 0 18px; color:var(--muted); font-size:18px; }
-    label{ display:block; margin:16px 0 8px; font-weight:900; font-size:20px; }
+    label{ display:block; margin:16px 0 8px; font-weight:950; font-size:20px; }
     input,select{
       width:100%; padding:14px; border-radius:14px; border:1px solid var(--border);
       font-size:18px; outline:none; background:#fff; box-sizing:border-box;
@@ -40,7 +40,7 @@
       border-radius:14px; color:var(--muted); font-size:16px;
       min-height:44px; display:flex; align-items:center;
     }
-    .msg{ margin-top:12px; font-weight:900; font-size:18px; }
+    .msg{ margin-top:12px; font-weight:950; font-size:18px; }
     .msg.err{ color:var(--danger); }
     .msg.ok{ color:var(--ok); }
     .msg.warn{ color:var(--warn); }
@@ -55,6 +55,7 @@
     ul{ margin:0 0 6px 18px; }
     li{ margin:4px 0; }
     .smallHelp{ margin-top:6px; font-size:14px; color:var(--muted); }
+    .tiny{ font-size:12px; color:var(--muted); margin-top:10px; }
   </style>
 </head>
 <body>
@@ -63,7 +64,7 @@
     <p class="sub">(Tagoknak NEM kell regisztrálni)</p>
 
     <label for="nameInput">Írd be a neved...</label>
-    <input id="nameInput" type="text" placeholder="Pl. Csóri Pingpongos" />
+    <input id="nameInput" type="text" placeholder="Pl. Csóri Pingpongos" autocomplete="name" />
 
     <label for="trainingSelect">Válassz időpontot</label>
     <select id="trainingSelect">
@@ -74,18 +75,27 @@
 
     <button id="signupBtn" class="btn btnPrimary">Jelentkezem</button>
     <button id="deleteBtn" class="btn btnGray">Jelentkezésem törlése</button>
-    <div class="smallHelp">Törlés: név alapján (és ha kiválasztasz időpontot, akkor csak arra a napra).</div>
+
+    <div class="smallHelp">
+      Törlés: név alapján (és ha kiválasztasz időpontot, akkor csak arra a napra).
+    </div>
 
     <div id="msg" class="msg"></div>
 
     <div class="sectionTitle">Jelentkezők edzésnaponként</div>
     <div id="signupsRoot"></div>
+
+    <div class="tiny">
+      Ha “Failed to fetch / ERR_FAILED” hiba van: kapcsold ki az AdBlock/Privacy/Volume Booster bővítményt erre az oldalra.
+    </div>
   </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwFc8TTWUsRJg0sb1dPcwSPix84jCnxoTwkFkv4EuJK--ZS6MQHTv4-g_ShAv2Shtg/exec";
+/** ======= BEÁLLÍTÁS ======= */
+const API_URL = "https://script.google.com/macros/s/AKfycbzHSLSuBMvdNyebi0yH_FSZd1n2HCTCBi0URUnRTjJpwCL_hCJJdWkacV5neQTtHVhC/exec";
 const MAX_TRAININGS = 5;
 
+/** ======= ELEMEK ======= */
 const els = {
   name: document.getElementById("nameInput"),
   sel: document.getElementById("trainingSelect"),
@@ -99,12 +109,10 @@ const els = {
 let state = { trainings: [], signups: [] };
 
 function normalize(s){ return String(s || "").trim(); }
-
 function setMsg(text, type=""){
   els.msg.textContent = text || "";
   els.msg.className = "msg" + (type ? " " + type : "");
 }
-
 function isMeccsnap(noteText){
   return normalize(noteText).toLowerCase().includes("meccsnap");
 }
@@ -122,13 +130,17 @@ async function api(action, params = {}){
       referrerPolicy: "no-referrer",
     });
 
-    if (!res.ok) throw new Error("HTTP hiba: " + res.status);
+    if (!res.ok) {
+      const txt = await res.text().catch(()=> "");
+      throw new Error(`HTTP ${res.status}: ${txt.slice(0,150)}`);
+    }
+
     const data = await res.json();
     return data;
 
   } catch (err) {
-    const msg = err?.message || String(err);
-    if (/Failed to fetch|ERR_FAILED/i.test(msg)) {
+    const m = err?.message || String(err);
+    if (/Failed to fetch|ERR_FAILED/i.test(m)) {
       throw new Error("A böngésző blokkolja a Google Script hívást (AdBlock/Privacy/Volume Booster). Kapcsold ki erre az oldalra.");
     }
     throw err;
@@ -142,7 +154,7 @@ async function loadData(){
     if (!data.ok) throw new Error(data.error || "API hiba");
 
     state.trainings = Array.isArray(data.trainings) ? data.trainings : [];
-    state.signups = Array.isArray(data.signups) ? data.signups : [];
+    state.signups   = Array.isArray(data.signups)   ? data.signups   : [];
 
     renderDropdown();
     renderSignups();
@@ -180,7 +192,6 @@ function updateNote(){
   if (isMeccsnap(noteText)) {
     setMsg("Meccsnap: edzés nincs, csak szurkolás! :)", "warn");
   } else {
-    // ha nem meccsnap, ne hagyjuk ott a warn üzenetet
     if (els.msg.classList.contains("warn")) setMsg("");
   }
 }
@@ -255,4 +266,42 @@ async function onSignup(){
   }
 
   try {
-    const res = await api("signu
+    const res = await api("signup", { name, dateText, noteText });
+    if (!res.ok) return setMsg(res.error || "Nem sikerült a jelentkezés.", "err");
+
+    setMsg("Sikeres jelentkezés!", "ok");
+    await loadData();
+
+  } catch (err) {
+    console.error(err);
+    setMsg(err.message || "Hiba jelentkezés közben.", "err");
+  }
+}
+
+async function onDelete(){
+  setMsg("");
+  const name = normalize(els.name.value);
+  if (!name) return setMsg("Törléshez add meg a neved.", "err");
+
+  const dateText = normalize(els.sel.value);
+
+  try {
+    const res = await api("delete", { name, dateText });
+    if (!res.ok) return setMsg(res.error || "Nem sikerült a törlés.", "err");
+
+    setMsg(`Törölve: ${res.deleted || 1} db`, "ok");
+    await loadData();
+
+  } catch (err) {
+    console.error(err);
+    setMsg(err.message || "Hiba törlés közben.", "err");
+  }
+}
+
+els.sel.addEventListener("change", updateNote);
+els.signupBtn.addEventListener("click", onSignup);
+els.deleteBtn.addEventListener("click", onDelete);
+document.addEventListener("DOMContentLoaded", loadData);
+</script>
+</body>
+</html>
