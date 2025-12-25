@@ -13,15 +13,17 @@
       --radius:18px;
     }
     body{margin:0;padding:20px;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);display:flex;justify-content:center;align-items:flex-start;min-height:100vh;}
-    .container{width:420px;max-width:92vw;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;}
+    .container{width:420px;max-width:92vw;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px; position:relative;}
+
+    /* FIX: felesleges } törölve */
     h1{
-  margin:0 0 12px;
-  font-size:34px;
-  letter-spacing:-.5px;
-  text-align:center;          /* középre */
-  color:#ff4d6d;               /* szín – tetszőlegesen módosítható */
-}
-}
+      margin:0 0 12px;
+      font-size:34px;
+      letter-spacing:-.5px;
+      text-align:center;
+      color:#ff4d6d;
+    }
+
     .sub{margin:0 0 18px;color:var(--muted);font-size:18px;}
     label{display:block;margin:16px 0 8px;font-weight:950;font-size:20px;}
     input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--border);font-size:18px;outline:none;background:#fff;box-sizing:border-box;}
@@ -40,9 +42,77 @@
     ul{margin:0 0 6px 18px;}
     li{margin:4px 0;}
     .smallHelp{margin-top:6px;font-size:14px;color:var(--muted);}
+
+    /* =========================
+       ÚJ: LOADING OVERLAY + SPINNER
+       ========================= */
+    .loadingOverlay{
+      position:fixed;
+      inset:0;
+      background:rgba(240,242,245,.65);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      backdrop-filter: blur(2px);
+    }
+    .loadingCard{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:16px 18px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      max-width: 86vw;
+    }
+    .spinner{
+      width:28px;
+      height:28px;
+      border-radius:50%;
+      border:4px solid var(--border);
+      border-top-color: var(--btn1);
+      animation: spin .9s linear infinite;
+      flex:0 0 auto;
+    }
+    @keyframes spin{
+      to{ transform: rotate(360deg); }
+    }
+    .loadingText{
+      font-weight:900;
+      font-size:16px;
+      color:var(--text);
+      line-height:1.2;
+    }
+    .loadingSub{
+      font-weight:700;
+      font-size:13px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+    .isLoading .loadingOverlay{ display:flex; }
+    .isLoading button,
+    .isLoading input,
+    .isLoading select{
+      pointer-events:none; /* ne kattints közben */
+      opacity:.9;
+    }
   </style>
 </head>
 <body>
+
+  <!-- ÚJ: loader -->
+  <div id="loadingOverlay" class="loadingOverlay" aria-hidden="true">
+    <div class="loadingCard" role="status" aria-live="polite">
+      <div class="spinner"></div>
+      <div>
+        <div class="loadingText" id="loadingText">Adatok betöltése…</div>
+        <div class="loadingSub">Kérlek várj 1 pillanatot</div>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
     <h1>Edzés Jelentkezés</h1>
     <p class="sub">(Tagjainknak NEM kell jelentkezni!!!)</p>
@@ -80,9 +150,29 @@ const els = {
   signupBtn: document.getElementById("signupBtn"),
   deleteBtn: document.getElementById("deleteBtn"),
   signupsRoot: document.getElementById("signupsRoot"),
+
+  // ÚJ: loader elemek
+  loadingOverlay: document.getElementById("loadingOverlay"),
+  loadingText: document.getElementById("loadingText"),
 };
 
 let state = { trainings: [], signups: [] };
+
+// ÚJ: loader vezérlés
+let loadingCount = 0;
+function showLoading(text="Adatok betöltése…"){
+  loadingCount++;
+  els.loadingText.textContent = text;
+  document.body.classList.add("isLoading");
+  els.loadingOverlay.setAttribute("aria-hidden", "false");
+}
+function hideLoading(){
+  loadingCount = Math.max(0, loadingCount - 1);
+  if (loadingCount === 0){
+    document.body.classList.remove("isLoading");
+    els.loadingOverlay.setAttribute("aria-hidden", "true");
+  }
+}
 
 function normalize(s){ return String(s || "").trim(); }
 function setMsg(text, type=""){
@@ -93,7 +183,7 @@ function isMeccsnap(noteText){
   return normalize(noteText).toLowerCase().includes("meccsnap");
 }
 
-// ÚJ: a legördülőben is kiírjuk a megjegyzést
+// a legördülőben is kiírjuk a megjegyzést
 function formatOptionText(dateText, noteText){
   const n = normalize(noteText);
   return n ? `${dateText} — ${n}` : dateText;
@@ -109,16 +199,19 @@ async function api(action, params = {}){
 
 async function loadData(){
   setMsg("");
+  showLoading("Időpontok és jelentkezők betöltése…"); // ÚJ
   try {
     const data = await api("getData");
     if (!data.ok) throw new Error(data.error || "API hiba");
     state.trainings = Array.isArray(data.trainings) ? data.trainings : [];
     state.signups   = Array.isArray(data.signups)   ? data.signups   : [];
     renderDropdown();
-    renderSignupsForSelected(); // ÚJ: csak a kiválasztott napot listázzuk
+    renderSignupsForSelected();
   } catch (err) {
     console.error(err);
     setMsg(err.message || "Hiba az adatok betöltésekor.", "err");
+  } finally {
+    hideLoading(); // ÚJ
   }
 }
 
@@ -130,13 +223,12 @@ function renderDropdown(){
 
   for (const t of list){
     const opt = document.createElement("option");
-    opt.value = t.dateText;                 // EZ marad: value = dátum (ne változzon)
-    opt.dataset.note = t.noteText || "";    // megjegyzés tárolva
-    opt.textContent = formatOptionText(t.dateText, t.noteText); // ÚJ: dátum + megjegyzés
+    opt.value = t.dateText;
+    opt.dataset.note = t.noteText || "";
+    opt.textContent = formatOptionText(t.dateText, t.noteText);
     els.sel.appendChild(opt);
   }
 
-  // visszaállítjuk a korábbi kiválasztást, ha benne van még
   if (prevSelected){
     els.sel.value = prevSelected;
   }
@@ -148,7 +240,7 @@ function updateNote(){
   const dateText = normalize(els.sel.value);
   if (!dateText){
     els.note.textContent = "Megjegyzés: —";
-    renderSignupsForSelected(); // ha nincs választás, alul se legyen lista
+    renderSignupsForSelected();
     return;
   }
 
@@ -159,10 +251,9 @@ function updateNote(){
   if (isMeccsnap(noteText)) setMsg("Meccsnap: edzés nincs, csak szurkolás! :)", "warn");
   else if (els.msg.classList.contains("warn")) setMsg("");
 
-  renderSignupsForSelected(); // ÚJ: kiválasztáskor frissítjük az alul lévő listát
+  renderSignupsForSelected();
 }
 
-// ÚJ: csak a kiválasztott edzésnap jelentkezőit listázza
 function renderSignupsForSelected(){
   const root = els.signupsRoot;
   root.innerHTML = "";
@@ -228,6 +319,7 @@ async function onSignup(){
   const noteText = normalize(opt?.dataset?.note || "");
   if (isMeccsnap(noteText)) return setMsg("Meccsnap miatt edzés nem, de a szurkolás lehetséges! :)", "err");
 
+  showLoading("Jelentkezés mentése…"); // ÚJ
   try {
     const res = await api("signup", { name, dateText, noteText });
     if (!res.ok) return setMsg(res.error || "Nem sikerült a jelentkezés.", "err");
@@ -236,6 +328,8 @@ async function onSignup(){
   } catch (err) {
     console.error(err);
     setMsg(err.message || "Hiba jelentkezés közben.", "err");
+  } finally {
+    hideLoading(); // ÚJ
   }
 }
 
@@ -246,6 +340,7 @@ async function onDelete(){
 
   const dateText = normalize(els.sel.value);
 
+  showLoading("Jelentkezés törlése…"); // ÚJ
   try {
     const res = await api("delete", { name, dateText });
     if (!res.ok) return setMsg(res.error || "Nem sikerült a törlés.", "err");
@@ -254,12 +349,32 @@ async function onDelete(){
   } catch (err) {
     console.error(err);
     setMsg(err.message || "Hiba törlés közben.", "err");
+  } finally {
+    hideLoading(); // ÚJ
   }
 }
 
 els.sel.addEventListener("change", updateNote);
 els.signupBtn.addEventListener("click", onSignup);
 els.deleteBtn.addEventListener("click", onDelete);
+
+// ÚJ: amikor rákattintasz a legördülőre, villanjon fel a loader,
+// ha még nincs adat (vagy újra akarod tölteni)
+els.sel.addEventListener("mousedown", () => {
+  // ha még üres a lista (csak az alap option van), akkor mutassunk loadert
+  if (els.sel.options.length <= 1){
+    showLoading("Időpontok betöltése…");
+  }
+});
+els.sel.addEventListener("focus", () => {
+  if (els.sel.options.length <= 1){
+    showLoading("Időpontok betöltése…");
+  }
+});
+// amint megnyílt/bezárult (change vagy blur), vegyük le a "kattintás-loadert"
+// (az igazi API loader-t úgyis a loadData kezeli)
+els.sel.addEventListener("blur", () => hideLoading());
+
 document.addEventListener("DOMContentLoaded", loadData);
 </script>
 </body>
