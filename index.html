@@ -23,7 +23,23 @@
       color:#ff4d6d;
     }
 
-    .sub{margin:0 0 10px;color:var(--muted);font-size:18px;}
+    /* ✅ A 2. képhez: a sub sor legyen flex, jobb oldalon dropdownnal */
+    .subRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin:0 0 14px;
+    }
+    .subText{
+      margin:0;
+      color:var(--muted);
+      font-size:18px;
+      line-height:1.2;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
     label{display:block;margin:16px 0 8px;font-weight:950;font-size:20px;}
     input,select{width:100%;padding:14px;border-radius:14px;border:1px solid var(--border);font-size:18px;outline:none;background:#fff;box-sizing:border-box;}
     .btn{width:100%;border:none;border-radius:16px;padding:16px 14px;font-size:22px;font-weight:950;cursor:pointer;margin-top:14px;color:#fff;}
@@ -104,16 +120,14 @@
     #noteBox{ display:none !important; }
 
     /* =========================
-       CSÓRI TAGOK – a (Tagjainknak...) sor UTÁN, és lenyíláskor takarhat mindent
+       CSÓRI TAGOK – a sub sor jobb oldalán (2. kép)
        ========================= */
     .memberDrop{
-      display:flex;
-      justify-content:flex-end;
-      margin: 0 0 6px;          /* közvetlen a sub után */
+      flex: 0 0 auto;
       opacity: 0.7;
       transition: opacity .2s ease;
-      position: relative;
-      z-index: 50;              /* alapból is előrébb */
+      position:relative;
+      z-index:50;
     }
     .memberDrop:hover{ opacity: 1; }
 
@@ -124,6 +138,7 @@
       border-radius:999px;
       padding:6px 14px;
       box-shadow:0 6px 18px rgba(0,0,0,.06);
+      white-space: nowrap;
     }
 
     .memberDrop summary{
@@ -145,11 +160,11 @@
       font-weight:900;
     }
 
-    /* FONTOS: a lista ABSZOLÚT, ráborul a tartalomra */
+    /* ✅ lenyílás takarhat mindent */
     .memberDrop details[open] .memberList{
       position:absolute;
       right:0;
-      top:42px;               /* a pill alá */
+      top:42px;
       width: 220px;
       background:#fff;
       border:1px solid var(--border);
@@ -159,7 +174,7 @@
       margin:0;
       max-height:240px;
       overflow:auto;
-      z-index:999;            /* lenyíláskor mindent takarjon */
+      z-index:999;
     }
 
     .memberList{
@@ -188,14 +203,17 @@
 
   <div class="container">
     <h1>Edzés Jelentkezés</h1>
-    <p class="sub">(Tagjainknak NEM kell jelentkezni!!!)</p>
 
-    <!-- IDE került, a sub után -->
-    <div class="memberDrop">
-      <details>
-        <summary>Csóri tagok <span class="caret">▾</span></summary>
-        <ul id="memberList" class="memberList"></ul>
-      </details>
+    <!-- ✅ 2. kép: egy sorban a sub szöveg + dropdown -->
+    <div class="subRow">
+      <p class="subText">(Tagjainknak NEM kell jelentkezni!!!)</p>
+
+      <div class="memberDrop">
+        <details>
+          <summary>Csóri tagok <span class="caret">▾</span></summary>
+          <ul id="memberList" class="memberList"></ul>
+        </details>
+      </div>
     </div>
 
     <label for="nameInput">Írd be a neved...</label>
