@@ -125,7 +125,6 @@
       <option value="">-- Válassz időpontot --</option>
     </select>
 
-    <div id="noteBox" class="noteBox">Megjegyzés: —</div>
 
     <button id="signupBtn" class="btn btnPrimary">Jelentkezem</button>
     <button id="deleteBtn" class="btn btnGray">Jelentkezésem törlése</button>
@@ -359,7 +358,7 @@ els.signupBtn.addEventListener("click", onSignup);
 els.deleteBtn.addEventListener("click", onDelete);
 
 // ÚJ: amikor rákattintasz a legördülőre, villanjon fel a loader,
-// ha még nincs adat (vagy újra akarod tölteni)
+// ha még nincs adat s(vagy újra akarod tölteni)
 els.sel.addEventListener("mousedown", () => {
   // ha még üres a lista (csak az alap option van), akkor mutassunk loadert
   if (els.sel.options.length <= 1){
