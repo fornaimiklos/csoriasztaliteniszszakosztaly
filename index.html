@@ -125,7 +125,7 @@
       <option value="">-- Válassz időpontot --</option>
     </select>
 
-    
+    <div id="noteBox" class="noteBox">Megjegyzés: —</div>
     
     <button id="signupBtn" class="btn btnPrimary">Jelentkezem</button>
     <button id="deleteBtn" class="btn btnGray">Jelentkezésem törlése</button>
@@ -239,7 +239,7 @@ function renderDropdown(){
 function updateNote(){
   const dateText = normalize(els.sel.value);
   if (!dateText){
-    els.note.textContent = "Megjegyzés: —";
+    if (els.note) els.note.textContent = "Megjegyzés: —";
     renderSignupsForSelected();
     return;
   }
