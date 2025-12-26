@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Edzésjelentkezés</title>
+  <title>Edzés Jelentkezés</title>
   <style>
     :root{
       --bg:#f0f2f5; --card:#fff; --text:#111827; --muted:#6b7280;
@@ -15,7 +15,6 @@
     body{margin:0;padding:20px;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);display:flex;justify-content:center;align-items:flex-start;min-height:100vh;}
     .container{width:420px;max-width:92vw;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px; position:relative;}
 
-    /* FIX: felesleges } törölve */
     h1{
       margin:0 0 12px;
       font-size:34px;
@@ -95,14 +94,19 @@
     .isLoading button,
     .isLoading input,
     .isLoading select{
-      pointer-events:none; /* ne kattints közben */
+      pointer-events:none;
       opacity:.9;
     }
+
+    /* =========================
+       FIX: Megjegyzés doboz ÖRÖKRE ELREJTVE
+       ========================= */
+    #noteBox{ display:none !important; }
   </style>
 </head>
 <body>
 
-  <!-- ÚJ: loader -->
+  <!-- loader -->
   <div id="loadingOverlay" class="loadingOverlay" aria-hidden="true">
     <div class="loadingCard" role="status" aria-live="polite">
       <div class="spinner"></div>
@@ -114,7 +118,7 @@
   </div>
 
   <div class="container">
-    <h1>Edzésjelentkezés</h1>
+    <h1>Edzés Jelentkezés</h1>
     <p class="sub">(Tagjainknak NEM kell jelentkezni!!!)</p>
 
     <label for="nameInput">Írd be a neved...</label>
@@ -125,9 +129,9 @@
       <option value="">-- Válassz időpontot --</option>
     </select>
 
+    <!-- Megjegyzés doboz: maradhat a kódban, de CSS-sel örökre rejtve -->
     <div id="noteBox" class="noteBox">Megjegyzés: —</div>
-    #noteBox { display: none !important; }
-    
+
     <button id="signupBtn" class="btn btnPrimary">Jelentkezem</button>
     <button id="deleteBtn" class="btn btnGray">Jelentkezésem törlése</button>
 
@@ -152,14 +156,14 @@ const els = {
   deleteBtn: document.getElementById("deleteBtn"),
   signupsRoot: document.getElementById("signupsRoot"),
 
-  // ÚJ: loader elemek
+  // loader elemek
   loadingOverlay: document.getElementById("loadingOverlay"),
   loadingText: document.getElementById("loadingText"),
 };
 
 let state = { trainings: [], signups: [] };
 
-// ÚJ: loader vezérlés
+// loader vezérlés
 let loadingCount = 0;
 function showLoading(text="Adatok betöltése…"){
   loadingCount++;
@@ -200,7 +204,7 @@ async function api(action, params = {}){
 
 async function loadData(){
   setMsg("");
-  showLoading("Időpontok és jelentkezők betöltése…"); // ÚJ
+  showLoading("Időpontok és jelentkezők betöltése…");
   try {
     const data = await api("getData");
     if (!data.ok) throw new Error(data.error || "API hiba");
@@ -212,7 +216,7 @@ async function loadData(){
     console.error(err);
     setMsg(err.message || "Hiba az adatok betöltésekor.", "err");
   } finally {
-    hideLoading(); // ÚJ
+    hideLoading();
   }
 }
 
@@ -240,14 +244,17 @@ function renderDropdown(){
 function updateNote(){
   const dateText = normalize(els.sel.value);
   if (!dateText){
-    if (els.note) els.note.textContent = "Megjegyzés: —";
+    if (els.note) els.note.textContent = "Megjegyzés: —";  // FIX: ne dobjon hibát
     renderSignupsForSelected();
     return;
   }
 
   const opt = els.sel.selectedOptions[0];
   const noteText = normalize(opt?.dataset?.note || "");
-  els.note.textContent = noteText ? `Megjegyzés: ${noteText}` : "Megjegyzés: —";
+
+  if (els.note){
+    els.note.textContent = noteText ? `Megjegyzés: ${noteText}` : "Megjegyzés: —"; // FIX
+  }
 
   if (isMeccsnap(noteText)) setMsg("Meccsnap: edzés nincs, csak szurkolás! :)", "warn");
   else if (els.msg.classList.contains("warn")) setMsg("");
@@ -320,7 +327,7 @@ async function onSignup(){
   const noteText = normalize(opt?.dataset?.note || "");
   if (isMeccsnap(noteText)) return setMsg("Meccsnap miatt edzés nem, de a szurkolás lehetséges! :)", "err");
 
-  showLoading("Jelentkezés mentése…"); // ÚJ
+  showLoading("Jelentkezés mentése…");
   try {
     const res = await api("signup", { name, dateText, noteText });
     if (!res.ok) return setMsg(res.error || "Nem sikerült a jelentkezés.", "err");
@@ -330,7 +337,7 @@ async function onSignup(){
     console.error(err);
     setMsg(err.message || "Hiba jelentkezés közben.", "err");
   } finally {
-    hideLoading(); // ÚJ
+    hideLoading();
   }
 }
 
@@ -341,7 +348,7 @@ async function onDelete(){
 
   const dateText = normalize(els.sel.value);
 
-  showLoading("Jelentkezés törlése…"); // ÚJ
+  showLoading("Jelentkezés törlése…");
   try {
     const res = await api("delete", { name, dateText });
     if (!res.ok) return setMsg(res.error || "Nem sikerült a törlés.", "err");
@@ -351,7 +358,7 @@ async function onDelete(){
     console.error(err);
     setMsg(err.message || "Hiba törlés közben.", "err");
   } finally {
-    hideLoading(); // ÚJ
+    hideLoading();
   }
 }
 
@@ -359,10 +366,7 @@ els.sel.addEventListener("change", updateNote);
 els.signupBtn.addEventListener("click", onSignup);
 els.deleteBtn.addEventListener("click", onDelete);
 
-// ÚJ: amikor rákattintasz a legördülőre, villanjon fel a loader,
-// ha még nincs adat (vagy újra akarod tölteni)
 els.sel.addEventListener("mousedown", () => {
-  // ha még üres a lista (csak az alap option van), akkor mutassunk loadert
   if (els.sel.options.length <= 1){
     showLoading("Időpontok betöltése…");
   }
@@ -372,8 +376,6 @@ els.sel.addEventListener("focus", () => {
     showLoading("Időpontok betöltése…");
   }
 });
-// amint megnyílt/bezárult (change vagy blur), vegyük le a "kattintás-loadert"
-// (az igazi API loader-t úgyis a loadData kezeli)
 els.sel.addEventListener("blur", () => hideLoading());
 
 document.addEventListener("DOMContentLoaded", loadData);
