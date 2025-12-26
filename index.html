@@ -43,7 +43,7 @@
     .smallHelp{margin-top:6px;font-size:14px;color:var(--muted);}
 
     /* =========================
-       LOADING OVERLAY + SPINNER
+       ÚJ: LOADING OVERLAY + SPINNER
        ========================= */
     .loadingOverlay{
       position:fixed;
@@ -99,65 +99,9 @@
     }
 
     /* =========================
-       Megjegyzés doboz ÖRÖKRE ELREJTVE
+       FIX: Megjegyzés doboz ÖRÖKRE ELREJTVE
        ========================= */
     #noteBox{ display:none !important; }
-
-    /* =========================
-       CSÓRI TAGOK LENYÍLÓ – ÚJ POZÍCIÓ + 70% OPACITY
-       ========================= */
-    .memberDrop{
-      margin: 6px 0 10px;
-      display: flex;
-      justify-content: flex-end;
-      opacity: 0.7;
-      transition: opacity .2s ease;
-    }
-    .memberDrop:hover{
-      opacity: 1;
-    }
-
-    .memberDrop details{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:999px;
-      padding:6px 14px;
-      box-shadow:0 6px 18px rgba(0,0,0,.06);
-    }
-
-    .memberDrop summary{
-      list-style:none;
-      cursor:pointer;
-      font-weight:950;
-      font-size:15px;
-      color:var(--text);
-      user-select:none;
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-    .memberDrop summary::-webkit-details-marker{ display:none; }
-
-    .caret{
-      font-size:12px;
-      color:var(--muted);
-      font-weight:900;
-    }
-
-    .memberList{
-      margin:10px 0 0;
-      padding:10px 0 0;
-      list-style:none;
-      max-height:220px;
-      overflow:auto;
-      border-top:1px solid var(--border);
-    }
-    .memberList li{
-      margin:6px 0;
-      font-size:14px;
-      color:var(--muted);
-      font-weight:850;
-    }
   </style>
 </head>
 <body>
@@ -174,16 +118,8 @@
   </div>
 
   <div class="container">
-    <h1>Edzés Jelentkezés</h1>
+    <h1>Edzésjelentkezés</h1>
     <p class="sub">(Tagjainknak NEM kell jelentkezni!!!)</p>
-
-    <!-- Csóri tagok: ide pozicionálva -->
-    <div class="memberDrop">
-      <details>
-        <summary>Csóri tagok <span class="caret">▾</span></summary>
-        <ul id="memberList" class="memberList"></ul>
-      </details>
-    </div>
 
     <label for="nameInput">Írd be a neved...</label>
     <input id="nameInput" type="text" placeholder="Pl. Nagy Béla :) " autocomplete="name" />
@@ -193,7 +129,7 @@
       <option value="">-- Válassz időpontot --</option>
     </select>
 
-    <!-- Megjegyzés doboz: marad a kódban, de örökre rejtve -->
+    <!-- Megjegyzés doboz: maradhat a kódban, de CSS-sel örökre rejtve -->
     <div id="noteBox" class="noteBox">Megjegyzés: —</div>
 
     <button id="signupBtn" class="btn btnPrimary">Jelentkezem</button>
@@ -211,14 +147,6 @@
 const WEBAPP_EXEC_URL = "https://script.google.com/macros/s/AKfycbymbi5vjPte9ODlU0Am_zQOkUbgzIwD0CZtruwVrqy_gierUrHY3v7Xz1easWqjuUiz/exec";
 const MAX_TRAININGS = 5;
 
-/* Taglista (Tag 1 - Tag 16) */
-const CSORI_TAGOK = [
-  "Tag 1","Tag 2","Tag 3","Tag 4",
-  "Tag 5","Tag 6","Tag 7","Tag 8",
-  "Tag 9","Tag 10","Tag 11","Tag 12",
-  "Tag 13","Tag 14","Tag 15","Tag 16"
-];
-
 const els = {
   name: document.getElementById("nameInput"),
   sel: document.getElementById("trainingSelect"),
@@ -231,9 +159,6 @@ const els = {
   // loader elemek
   loadingOverlay: document.getElementById("loadingOverlay"),
   loadingText: document.getElementById("loadingText"),
-
-  // taglista
-  memberList: document.getElementById("memberList"),
 };
 
 let state = { trainings: [], signups: [] };
@@ -267,17 +192,6 @@ function isMeccsnap(noteText){
 function formatOptionText(dateText, noteText){
   const n = normalize(noteText);
   return n ? `${dateText} — ${n}` : dateText;
-}
-
-/* Csóri tagok kirajzolása */
-function renderMembers(){
-  if (!els.memberList) return;
-  els.memberList.innerHTML = "";
-  for (const n of CSORI_TAGOK){
-    const li = document.createElement("li");
-    li.textContent = n;
-    els.memberList.appendChild(li);
-  }
 }
 
 async function api(action, params = {}){
@@ -330,7 +244,7 @@ function renderDropdown(){
 function updateNote(){
   const dateText = normalize(els.sel.value);
   if (!dateText){
-    if (els.note) els.note.textContent = "Megjegyzés: —";
+    if (els.note) els.note.textContent = "Megjegyzés: —";  // FIX: ne dobjon hibát
     renderSignupsForSelected();
     return;
   }
@@ -339,7 +253,7 @@ function updateNote(){
   const noteText = normalize(opt?.dataset?.note || "");
 
   if (els.note){
-    els.note.textContent = noteText ? `Megjegyzés: ${noteText}` : "Megjegyzés: —";
+    els.note.textContent = noteText ? `Megjegyzés: ${noteText}` : "Megjegyzés: —"; // FIX
   }
 
   if (isMeccsnap(noteText)) setMsg("Meccsnap: edzés nincs, csak szurkolás! :)", "warn");
@@ -458,5 +372,13 @@ els.sel.addEventListener("mousedown", () => {
   }
 });
 els.sel.addEventListener("focus", () => {
-  i
+  if (els.sel.options.length <= 1){
+    showLoading("Időpontok betöltése…");
+  }
+});
+els.sel.addEventListener("blur", () => hideLoading());
 
+document.addEventListener("DOMContentLoaded", loadData);
+</script>
+</body>
+</html>
